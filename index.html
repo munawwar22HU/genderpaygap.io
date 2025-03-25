@@ -1,21 +1,66 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Scrollytelling Poems</title>
+    <title>Gender Pay Gap: A Scrollytelling Experience</title>
     <link rel="stylesheet" type="text/css" href="styles.css" />
     <script src="https://d3js.org/d3.v7.min.js"></script>
   </head>
-
   <body>
     <header>
-      <h1 class="title">The Divide in Numbers: A Wage Story</h1>
+      <h1 class="title">The Gender Pay Gap</h1>
     </header>
     <main class="wrapper">
       <div class="left-column">
-        
-        <div class="left-column-content"></div>
-      </div>
+        <div class="left-column-content">
+          <!-- Filler verse for vertical centering -->
+          <div class="filler-verse"></div>
+          
+          <ul class="verse" id="verse1">
+            <li class="line" id="line1">From '99 to 2013, the numbers tell,</li>
+            <li class="line" id="line2">A story of wages, some rise, some fell.</li>
+            <li class="line" id="line3">For men, the pay climbs steadier year by year,</li>
+            <li class="line" id="line4">While women's wages rise slower – the gap persists here.</li>
+          </ul>
 
+          <ul class="verse" id="verse2">
+            <li class="line" id="line1">Young workers start close, dreams equally bright,</li>
+            <li class="line" id="line2">But with passing years, parity fades from sight.</li>
+            <li class="line" id="line3">At mid-life, men's earnings accelerate fast,</li>
+            <li class="line" id="line4">While women's wage growth seems not to last.</li>
+          </ul>
+
+          <ul class="verse" id="verse3">
+            <li class="line" id="line1">In boardrooms and hospitals, fields and in stores,</li>
+            <li class="line" id="line2">Different titles but one truth endures.</li>
+            <li class="line" id="line3">Where men dominate, salaries reach new heights</span>,</li>
+            <li class="line" id="line4">While women's fields struggle for equal rights</span>.</li>
+          </ul>
+
+          <ul class="verse" id="verse4">
+            <li class="line" id="line1">The clock ticks onward, hours pile high,</li>
+            <li class="line" id="line2">Full-time or part-time, the gap won't shy.</li>
+            <li class="line" id="line3">More hours should mean more dollars earned,</li>
+            <li class="line" id="line4">Yet women's extra efforts often go unreturned.</li>
+          </ul>
+          
+          <ul class="verse" id="verse5">
+            <li class="line" id="line1">With knowledge comes power, or so we're told,</li>
+            <li class="line" id="line2">Yet diplomas and degrees don't guarantee gold</span>.</li>
+            <li class="line" id="line3">Master's degrees and doctorates attained,</li>
+            <li class="line" id="line4">Still find the wage gap stubbornly maintained.</li>
+          </ul>
+          
+          <ul class="verse" id="verse6">
+            <li class="line" id="line1">Across the spectrum of heritage and skin,</li>
+            <li class="line" id="line2">Multiple factors make this gap begin.</li>
+            <li class="line" id="line3">For women of color, two barriers arise,</li>
+            <li class="line" id="line4">Where gender and race create divides of surprising size.</li>
+          </ul>
+          
+          <!-- Filler verse for vertical centering -->
+          <div class="filler-verse"></div>
+        </div>
+      </div>
       <div class="right-column">
         <svg id="svg"></svg>
       </div>
@@ -24,6 +69,6 @@
       <button class="arrow-button" id="backward-button">◄</button>
       <button class="arrow-button" id="forward-button">►</button>
     </footer>
-    <script type="module" src="main.js"></script>
+    <script src="main.js"></script>
   </body>
 </html>
