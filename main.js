@@ -59,7 +59,7 @@ async function loadData() {
     const numBins = 5; // User-defined age bins
 
     // Load and format gender pay gap dataset
-    await d3.csv("../data/gender-pay-gap-dataset-final.csv").then((data) => {
+    await d3.csv("./data/gender-pay-gap-dataset-final.csv").then((data) => {
       genderPayGapData = data.map((d) => ({
         year: +d.year,
         age: +d.age,
