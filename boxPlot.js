@@ -1,20 +1,17 @@
 function drawHoursBoxPlot(hoursData) {
   clearChartArea();
   currentChartType = "box";
-
-  // Create boxplot-ready data from the hoursData
-  const boxplotData = hoursData.map((d) => ({
-    category: d.category,
-    min: d.min,
-    q1: d.q1,
-    median: d.median,
-    q3: d.q3,
-    max: d.max,
-    medianWage: d.medianWage,
+  
+  // Prepare data - calculate hourly rate and normalize hours
+  const boxplotData = hoursData.map(d => ({
+    ...d,
+    // Convert total hours to hours per week
+    hourlyRate: Math.round(d.medianWage / (d.median / 40)),
+    averageHoursPerWeek: d.median / 40
   }));
-
-  // Enhanced margins with more proportional spacing
-  const margin = { top: 80, right: 100, bottom: 100, left: 220 };
+  
+  // Maximize margins for full use of the available space
+  const margin = { top: 80, right: 100, bottom: 80, left: 200 };  // Reduced bottom margin
   const innerWidth = width - margin.left - margin.right;
   const innerHeight = height - margin.top - margin.bottom;
 
@@ -23,184 +20,129 @@ function drawHoursBoxPlot(hoursData) {
     .append("g")
     .attr("transform", `translate(${margin.left}, ${margin.top})`);
 
-  // Improved title with more styling
+  // Title 
   g.append("text")
     .attr("class", "chart-title")
     .attr("x", innerWidth / 2)
-    .attr("y", -50)
+    .attr("y", -20)
     .attr("text-anchor", "middle")
-    .attr("font-size", "18px")
-    .attr("font-weight", "bold")
-    .style("fill", "#333")
-    .text("Hours Worked Distribution & Median Wage");
+    .text("Annual Hours Worked Distribution");
 
-  // Y axis scale and axis for the boxplot with improved styling
+  // Y axis scale and axis for the boxplot
   const y = d3
     .scaleBand()
-    .domain(boxplotData.map((d) => d.category))
+    .domain(boxplotData.map(d => d.category))
     .range([0, innerHeight])
-    .padding(0.3);
-
+    .padding(0.2);
+    
   g.append("g")
-    .call(d3.axisLeft(y).tickSize(0))
-    .selectAll("text")
-    .style("text-anchor", "end")
-    .style("font-size", "12px")
-    .style("fill", "#666")
-    .attr("dx", "-0.5em");
+    .call(d3.axisLeft(y));
 
-  // X axis scale and axis for the boxplot with more intelligent domain
+  // X axis scale and axis for the boxplot (annual hours)
   const x = d3
     .scaleLinear()
     .domain([
-      Math.min(
-        0,
-        d3.min(boxplotData, (d) => d.min)
-      ),
-      Math.max(
-        60,
-        d3.max(boxplotData, (d) => d.max)
-      ),
+      Math.min(0, d3.min(boxplotData, d => d.min)),
+      Math.max(6000, d3.max(boxplotData, d => d.max))
     ])
     .range([0, innerWidth]);
-
+    
   g.append("g")
     .attr("transform", `translate(0, ${innerHeight})`)
-    .call(d3.axisBottom(x).ticks(8))
-    .selectAll("text")
-    .style("font-size", "10px")
-    .style("fill", "#666");
+    .call(d3.axisBottom(x).tickFormat(d3.format(".0f")));
 
-  // Add X axis label with improved styling
+  // X axis label for annual hours
   g.append("text")
     .attr("x", innerWidth / 2)
-    .attr("y", innerHeight + 50)
+    .attr("y", innerHeight + 40)
     .attr("text-anchor", "middle")
-    .style("font-size", "12px")
-    .style("fill", "#666")
-    .text("Hours per Week");
+    .text("Annual Hours Worked");
 
-  // Enhanced box plots with smoother color gradients
+  // Box plots
   boxplotData.forEach((d, i) => {
     const boxHeight = y.bandwidth();
     const category = d.category;
     const yPos = y(category);
-
-    // Color with soft gradient
-    const baseColor = category.includes("Male") ? "#2563EB" : "#DB2777";
-    const lightColor = d3.color(baseColor).brighter(0.5);
-
-    // Min-max line with softer stroke
+    const baseColor = category.includes('Male') ? "#2563EB" : "#DB2777";
+    
+    // Min-max line
     g.append("line")
       .attr("x1", x(d.min))
       .attr("x2", x(d.max))
       .attr("y1", yPos + boxHeight / 2)
       .attr("y2", yPos + boxHeight / 2)
       .attr("stroke", "#999")
-      .attr("stroke-width", 1);
+      .attr("stroke-width", 1.5);
 
-    // Whiskers with soft caps
+    // Whiskers
     ["min", "max"].forEach((type) => {
       g.append("line")
         .attr("x1", x(d[type]))
         .attr("x2", x(d[type]))
-        .attr("y1", yPos + boxHeight / 2 - 4)
-        .attr("y2", yPos + boxHeight / 2 + 4)
+        .attr("y1", yPos + boxHeight / 2 - 5)
+        .attr("y2", yPos + boxHeight / 2 + 5)
         .attr("stroke", "#666")
         .attr("stroke-width", 1.5);
     });
 
-    // Box with gradient and soft shadow
+    // Box from Q1 to Q3
     g.append("rect")
       .attr("x", x(d.q1))
       .attr("y", yPos + boxHeight / 4)
       .attr("width", x(d.q3) - x(d.q1))
       .attr("height", boxHeight / 2)
-      .attr("fill", lightColor)
+      .attr("fill", baseColor)
+      .attr("opacity", 0.2)
       .attr("stroke", baseColor)
-      .attr("stroke-width", 1.5)
-      .attr("opacity", 0.8)
-      .attr("filter", "url(#drop-shadow)");
+      .attr("stroke-width", 1);
 
-    // Median line with emphasis
+    // Median line
     g.append("line")
       .attr("x1", x(d.median))
       .attr("x2", x(d.median))
       .attr("y1", yPos + boxHeight / 4)
-      .attr("y2", yPos + (boxHeight * 3) / 4)
-      .attr("stroke", "#000")
+      .attr("y2", yPos + boxHeight * 3/4)
+      .attr("stroke", baseColor)
       .attr("stroke-width", 2.5);
 
-    // Enhanced median wage annotation
+    // Median wage annotation
     g.append("text")
       .attr("x", x(d.max) + 15)
       .attr("y", yPos + boxHeight / 2)
       .attr("font-size", "11px")
-      .attr("font-weight", "bold")
       .attr("fill", "#444")
       .text(`$${d.medianWage.toLocaleString()} annual`)
       .attr("alignment-baseline", "middle");
   });
 
-  // Modern, centered legend with soft hover effect
-  const legendGroup = svg
-    .append("g")
-    .attr(
-      "transform",
-      `translate(${margin.left + (innerWidth - 250) / 2}, ${height - 70})`
-    );
+  // Create a simple legend container below the SVG axes
+  const legend = svg.append("g").attr(
+    "transform",
+    `translate(${margin.left + innerWidth / 4}, ${
+      innerHeight + margin.bottom + 40
+    })` // Adjusted for better centering
+  ); // Centered and pushed further down
 
-  const legendItems = [
-    { color: "#2563EB", label: "Male" },
-    { color: "#DB2777", label: "Female" },
-  ];
+  // Men's wage legend
+  legend
+    .append("circle")
+    .attr("cx", 0)
+    .attr("cy", 10)
+    .attr("r", 6)
+    .attr("fill", "#2563EB");
 
-  // Add drop shadow definition
-  svg
-    .append("defs")
-    .append("filter")
-    .attr("id", "drop-shadow")
-    .append("feDropShadow")
-    .attr("dx", "1")
-    .attr("dy", "1")
-    .attr("stdDeviation", "1");
+  legend.append("text").attr("x", 15).attr("y", 15).text("Men's Wage");
 
-  // Legend with hover interactions
-  const legendContainer = legendGroup
-    .append("rect")
-    .attr("width", 250)
-    .attr("height", 40)
-    .attr("fill", "#f4f4f4")
-    .attr("rx", 10)
-    .attr("ry", 10)
-    .attr("stroke", "#ddd")
-    .attr("stroke-width", 1);
+  // Women's wage legend
+  legend
+    .append("circle")
+    .attr("cx", 120)
+    .attr("cy", 10)
+    .attr("r", 6)
+    .attr("fill", "#DB2777");
 
-  legendGroup
-    .selectAll("rect.legend-item")
-    .data(legendItems)
-    .enter()
-    .append("rect")
-    .attr("class", "legend-item")
-    .attr("x", (d, i) => 25 + i * 125)
-    .attr("y", 10)
-    .attr("width", 20)
-    .attr("height", 20)
-    .attr("fill", (d) => d.color)
-    .attr("stroke", "#333")
-    .attr("stroke-width", 1)
-    .attr("rx", 4)
-    .attr("ry", 4);
+  legend.append("text").attr("x", 135).attr("y", 15).text("Women's Wage");
 
-  legendGroup
-    .selectAll("text.legend-label")
-    .data(legendItems)
-    .enter()
-    .append("text")
-    .attr("x", (d, i) => 50 + i * 125)
-    .attr("y", 25)
-    .attr("text-anchor", "start")
-    .attr("font-size", "12px")
-    .attr("fill", "#333")
-    .text((d) => d.label);
+  
+
 }
