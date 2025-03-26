@@ -49,7 +49,7 @@ let keyframes = [
   {
     activeVerse: 4,
     activeLines: [1, 2, 3, 4],
-    svgUpdate: drawBoxPlot,
+    svgUpdate: WagesByHours,
   },
   {
     activeVerse: 5,
@@ -59,7 +59,7 @@ let keyframes = [
   {
     activeVerse: 6,
     activeLines: [1, 2, 3, 4],
-    svgUpdate: WagesByHours,
+    svgUpdate: WagesByRace,
   },
 ];
 
