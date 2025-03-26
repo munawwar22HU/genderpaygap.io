@@ -61,343 +61,237 @@ function drawEducationBar() {
   drawCombinedEducationViz(educationData);
 }
 
-function drawRaceBars()
-{
+function drawRaceBars() {
   drawRaceData(raceData);
 }
 // Load data from the dataset
 async function loadData() {
-  try {
-    const numBins = 5; // User-defined age bins
+  const numBins = 5; // User-defined age bins
 
-    // Load and format gender pay gap dataset
-    await d3.csv("gender-pay-gap-dataset-final.csv").then((data) => {
-      genderPayGapData = data.map((d) => ({
-        year: +d.year,
-        age: +d.age,
-        sex: d.sex,
-        race: d.race,
-        incwage: +d.incwage,
-        annhrs: +d.annhrs,
-        Occupation: d.Occupation,
-        Education: d.Education,
-        ft: d.ft_status,
-      }));
+  // Load and format gender pay gap dataset
+  await d3.csv("gender-pay-gap-dataset-final.csv").then((data) => {
+    genderPayGapData = data.map((d) => ({
+      year: +d.year,
+      age: +d.age,
+      sex: d.sex,
+      race: d.race,
+      incwage: +d.incwage,
+      annhrs: +d.annhrs,
+      Occupation: d.Occupation,
+      Education: d.Education,
+      ft: d.ft_status,
+    }));
 
-      console.log("Loaded data:", genderPayGapData);
+    console.log("Loaded data:", genderPayGapData);
 
-      // === Compute Average Wage by Year ===
-      const groupedData = d3.group(
-        genderPayGapData,
-        (d) => d.year,
-        (d) => d.sex
-      );
-      const avgIncwageByYear = [];
+    // === Compute Average Wage by Year ===
+    const groupedData = d3.group(
+      genderPayGapData,
+      (d) => d.year,
+      (d) => d.sex
+    );
+    const avgIncwageByYear = [];
 
-      groupedData.forEach((sexGroups, year) => {
-        const menEntries = sexGroups.get("Male") || [];
-        const womenEntries = sexGroups.get("Female") || [];
+    groupedData.forEach((sexGroups, year) => {
+      const menEntries = sexGroups.get("Male") || [];
+      const womenEntries = sexGroups.get("Female") || [];
 
-        const avgMenWage = d3.mean(menEntries, (d) => d.incwage) || 0;
-        const avgWomenWage = d3.mean(womenEntries, (d) => d.incwage) || 0;
-        const gapPercentage = avgMenWage
-          ? Math.round(((avgMenWage - avgWomenWage) / avgMenWage) * 100 * 10) /
-            10
-          : 0;
+      const avgMenWage = d3.mean(menEntries, (d) => d.incwage) || 0;
+      const avgWomenWage = d3.mean(womenEntries, (d) => d.incwage) || 0;
+      const gapPercentage = avgMenWage
+        ? Math.round(((avgMenWage - avgWomenWage) / avgMenWage) * 100 * 10) / 10
+        : 0;
 
-        avgIncwageByYear.push({
-          year: +year,
-          menWage: Math.round(avgMenWage),
-          womenWage: Math.round(avgWomenWage),
-          gapPercentage: gapPercentage,
-        });
+      avgIncwageByYear.push({
+        year: +year,
+        menWage: Math.round(avgMenWage),
+        womenWage: Math.round(avgWomenWage),
+        gapPercentage: gapPercentage,
       });
-
-      yearlyData = avgIncwageByYear.sort((a, b) => a.year - b.year);
-
-      // === Compute User-Specified Equal-Width Age Bins ===
-      const ageExtent = d3.extent(genderPayGapData, (d) => d.age);
-      const binWidth = Math.ceil((ageExtent[1] - ageExtent[0]) / numBins);
-
-      const binGenerator = d3
-        .bin()
-        .domain(ageExtent)
-        .thresholds(d3.range(ageExtent[0], ageExtent[1] + binWidth, binWidth))
-        .value((d) => d.age);
-
-      const bins = binGenerator(genderPayGapData);
-      ageData.length = 0;
-
-      bins.forEach((bin) => {
-        const menEntries = bin.filter((d) => d.sex === "Male");
-        const womenEntries = bin.filter((d) => d.sex === "Female");
-
-        const avgMenWage = d3.mean(menEntries, (d) => d.incwage) || 0;
-        const avgWomenWage = d3.mean(womenEntries, (d) => d.incwage) || 0;
-        const gap = avgMenWage
-          ? Math.round(((avgMenWage - avgWomenWage) / avgMenWage) * 100 * 10) /
-            10
-          : 0;
-
-        ageData.push({
-          ageGroup: `${Math.round(bin.x0)}-${Math.round(bin.x1)}`,
-          menWage: Math.round(avgMenWage),
-          womenWage: Math.round(avgWomenWage),
-          gap: gap,
-        });
-      });
-
-      console.log("Yearly Data:", yearlyData);
-      console.log("Age Data:", ageData);
-
-      // === Compute Occupation Data ===
-      const occupationGroups = d3.group(genderPayGapData, (d) => d.Occupation);
-
-      occupationData.length = 0;
-      occupationProportionData.length = 0; // Clear existing data
-
-      occupationGroups.forEach((entries, occupation) => {
-        const menEntries = entries.filter((d) => d.sex === "Male");
-        const womenEntries = entries.filter((d) => d.sex === "Female");
-
-        const totalMen = menEntries.length;
-        const totalWomen = womenEntries.length;
-        const totalWorkers = totalMen + totalWomen;
-
-        const menPercentage = totalWorkers
-          ? Math.round((totalMen / totalWorkers) * 100)
-          : 0;
-        const womenPercentage = totalWorkers
-          ? Math.round((totalWomen / totalWorkers) * 100)
-          : 0;
-
-        occupationData.push({
-          occupation: occupation,
-          menDominated: menPercentage > womenPercentage,
-          menWage: Math.round(d3.mean(menEntries, (d) => d.incwage) || 0),
-          womenWage: Math.round(d3.mean(womenEntries, (d) => d.incwage) || 0),
-        });
-
-        occupationProportionData.push({
-          occupation: occupation,
-          menPercentage: menPercentage,
-          womenPercentage: womenPercentage,
-        });
-      });
-
-      console.log("Occupation Data:", occupationData);
-      console.log("Occupation Proportion Data:", occupationProportionData);
-
-      const groupedByGenderAndTime = d3.group(
-        genderPayGapData,
-        (d) => d.sex,
-        (d) => d.ft
-      );
-
-      // Initialize an empty array to hold the formatted hours data for the box plot
-      hoursData.length = 0;
-
-      // Function to compute the box plot data (min, Q1, median, Q3, max)
-      function computeBoxPlotStats(hours) {
-        const sortedHours = hours.slice().sort(d3.ascending); // Sort the hours
-        const min = d3.min(sortedHours);
-        const max = d3.max(sortedHours);
-        const q1 = d3.quantile(sortedHours, 0.25); // 25th percentile
-        const median = d3.quantile(sortedHours, 0.5); // 50th percentile (median)
-        const q3 = d3.quantile(sortedHours, 0.75); // 75th percentile
-
-        return { min, q1, median, q3, max };
-      }
-
-      // Iterate over the grouped data to calculate the box plot stats for each category
-      groupedByGenderAndTime.forEach((sexGroups, gender) => {
-        sexGroups.forEach((entries, timeStatus) => {
-          const hours = entries.map((d) => d.annhrs); // Extract the hours worked data
-
-          // Compute the box plot statistics for hours worked
-          const stats = computeBoxPlotStats(hours);
-
-          // Calculate the median wage for the current group
-          const medianWage = d3.median(entries, (d) => d.incwage);
-
-          // Determine the category label based on gender and time status
-          const category = `${timeStatus} ${gender}`;
-
-          // Add the data to the hoursData array in the desired format, including quantiles for the box plot
-          hoursData.push({
-            category: category,
-            min: stats.min,
-            q1: stats.q1,
-            median: stats.median,
-            q3: stats.q3,
-            max: stats.max,
-            medianWage: Math.round(medianWage), // Median wage for the group
-          });
-        });
-      });
-
-      console.log("Hours Data:", hoursData);
-
-      educationData.length = 0; // Clear existing data
-      const educationGroups = d3.group(
-        genderPayGapData,
-        (d) => d.Education,
-        (d) => d.sex
-      );
-      // const educationData = [];
-
-      educationGroups.forEach((sexGroups, educationLevel) => {
-        const menEntries = sexGroups.get("Male") || [];
-        const womenEntries = sexGroups.get("Female") || [];
-
-        const avgMenWage = d3.mean(menEntries, (d) => d.incwage) || 0;
-        const avgWomenWage = d3.mean(womenEntries, (d) => d.incwage) || 0;
-        const gapPercentage = avgMenWage
-          ? Math.round(((avgMenWage - avgWomenWage) / avgMenWage) * 100 * 10) /
-            10
-          : 0;
-
-        educationData.push({
-          education: educationLevel,
-          menWage: Math.round(avgMenWage),
-          womenWage: Math.round(avgWomenWage),
-          gapPercentage: gapPercentage,
-        });
-      });
-
-      console.log("Education Data:", educationData);
-
-      console.log("Yearly Data:", yearlyData);
-
-      raceData.length = 0; // Clear existing data
-      const raceGroups = d3.group(genderPayGapData, (d) => d.race);
-
-      raceGroups.forEach((entries, race) => {
-        // Filter data by gender
-        const menEntries = entries.filter((d) => d.sex === "Male");
-        const womenEntries = entries.filter((d) => d.sex === "Female");
-
-        // Calculate average wage for men and women
-        const avgMenWage = d3.mean(menEntries, (d) => d.incwage) || 0;
-        const avgWomenWage = d3.mean(womenEntries, (d) => d.incwage) || 0;
-
-        // Add to the raceGenderData array in the desired format
-        raceData.push({
-          race: race,
-          menWage: Math.round(avgMenWage),
-          womenWage: Math.round(avgWomenWage),
-        });
-      });
-
-      console.log("Race and Gender Wage Data:", raceData);
     });
 
-   
-    return {
-      yearlyData,
-      ageData,
-      occupationData,
-      occupationProportionData,
-      hoursData,
-      educationData,
-      raceData,
-    };
-  } catch (error) {
-    console.error("Error loading data:", error);
-    return generateData(); // Fallback to sample data
-  }
-}
+    yearlyData = avgIncwageByYear.sort((a, b) => a.year - b.year);
 
-// Generate sample data for all visualizations (as a fallback)
-function generateData() {
-  // 3. Occupation
-  const occupationData = [
-    {
-      occupation: "Management",
-      menDominated: true,
-      menWage: 95000,
-      womenWage: 82000,
-    },
-    {
-      occupation: "Technology",
-      menDominated: true,
-      menWage: 88000,
-      womenWage: 79000,
-    },
-    {
-      occupation: "Finance",
-      menDominated: true,
-      menWage: 85000,
-      womenWage: 74000,
-    },
-    {
-      occupation: "Healthcare",
-      menDominated: false,
-      menWage: 75000,
-      womenWage: 68000,
-    },
-    {
-      occupation: "Education",
-      menDominated: false,
-      menWage: 62000,
-      womenWage: 58000,
-    },
-    {
-      occupation: "Retail",
-      menDominated: false,
-      menWage: 45000,
-      womenWage: 38000,
-    },
-  ];
+    // === Compute User-Specified Equal-Width Age Bins ===
+    const ageExtent = d3.extent(genderPayGapData, (d) => d.age);
+    const binWidth = Math.ceil((ageExtent[1] - ageExtent[0]) / numBins);
 
-  // 4. Hours Worked
-  const hoursData = [
-    {
-      category: "Part-time Men",
-      hours: [20, 22, 24, 25, 28, 30],
-      medianWage: 22000,
-    },
-    {
-      category: "Part-time Women",
-      hours: [18, 20, 22, 24, 26, 28],
-      medianWage: 19000,
-    },
-    {
-      category: "Full-time Men",
-      hours: [38, 40, 42, 45, 50, 55],
-      medianWage: 65000,
-    },
-    {
-      category: "Full-time Women",
-      hours: [38, 40, 42, 43, 45, 48],
-      medianWage: 52000,
-    },
-  ];
+    const binGenerator = d3
+      .bin()
+      .domain(ageExtent)
+      .thresholds(d3.range(ageExtent[0], ageExtent[1] + binWidth, binWidth))
+      .value((d) => d.age);
 
-  // 5. Education
-  const educationData = [
-    { education: "High School", menWage: 42000, womenWage: 35000 },
-    { education: "Some College", menWage: 50000, womenWage: 41000 },
-    { education: "Bachelor's", menWage: 75000, womenWage: 60000 },
-    { education: "Master's", menWage: 92000, womenWage: 75000 },
-    { education: "Doctoral", menWage: 120000, womenWage: 98000 },
-    { education: "Professional", menWage: 150000, womenWage: 125000 },
-  ];
+    const bins = binGenerator(genderPayGapData);
+    ageData.length = 0;
 
-  // 6. Race
-  const raceData = [
-    { race: "White", menWage: 70000, womenWage: 58000 },
-    { race: "Black", menWage: 50000, womenWage: 45000 },
-    { race: "Hispanic", menWage: 52000, womenWage: 42000 },
-    { race: "Asian", menWage: 90000, womenWage: 75000 },
-    { race: "Native American", menWage: 48000, womenWage: 40000 },
-    { race: "Other", menWage: 55000, womenWage: 47000 },
-  ];
+    bins.forEach((bin) => {
+      const menEntries = bin.filter((d) => d.sex === "Male");
+      const womenEntries = bin.filter((d) => d.sex === "Female");
+
+      const avgMenWage = d3.mean(menEntries, (d) => d.incwage) || 0;
+      const avgWomenWage = d3.mean(womenEntries, (d) => d.incwage) || 0;
+      const gap = avgMenWage
+        ? Math.round(((avgMenWage - avgWomenWage) / avgMenWage) * 100 * 10) / 10
+        : 0;
+
+      ageData.push({
+        ageGroup: `${Math.round(bin.x0)}-${Math.round(bin.x1)}`,
+        menWage: Math.round(avgMenWage),
+        womenWage: Math.round(avgWomenWage),
+        gap: gap,
+      });
+    });
+
+    console.log("Yearly Data:", yearlyData);
+    console.log("Age Data:", ageData);
+
+    // === Compute Occupation Data ===
+    const occupationGroups = d3.group(genderPayGapData, (d) => d.Occupation);
+
+    occupationData.length = 0;
+    occupationProportionData.length = 0; // Clear existing data
+
+    occupationGroups.forEach((entries, occupation) => {
+      const menEntries = entries.filter((d) => d.sex === "Male");
+      const womenEntries = entries.filter((d) => d.sex === "Female");
+
+      const totalMen = menEntries.length;
+      const totalWomen = womenEntries.length;
+      const totalWorkers = totalMen + totalWomen;
+
+      const menPercentage = totalWorkers
+        ? Math.round((totalMen / totalWorkers) * 100)
+        : 0;
+      const womenPercentage = totalWorkers
+        ? Math.round((totalWomen / totalWorkers) * 100)
+        : 0;
+
+      occupationData.push({
+        occupation: occupation,
+        menDominated: menPercentage > womenPercentage,
+        menWage: Math.round(d3.mean(menEntries, (d) => d.incwage) || 0),
+        womenWage: Math.round(d3.mean(womenEntries, (d) => d.incwage) || 0),
+      });
+
+      occupationProportionData.push({
+        occupation: occupation,
+        menPercentage: menPercentage,
+        womenPercentage: womenPercentage,
+      });
+    });
+
+    console.log("Occupation Data:", occupationData);
+    console.log("Occupation Proportion Data:", occupationProportionData);
+
+    const groupedByGenderAndTime = d3.group(
+      genderPayGapData,
+      (d) => d.sex,
+      (d) => d.ft
+    );
+
+    // Initialize an empty array to hold the formatted hours data for the box plot
+    hoursData.length = 0;
+
+    // Function to compute the box plot data (min, Q1, median, Q3, max)
+    function computeBoxPlotStats(hours) {
+      const sortedHours = hours.slice().sort(d3.ascending); // Sort the hours
+      const min = d3.min(sortedHours);
+      const max = d3.max(sortedHours);
+      const q1 = d3.quantile(sortedHours, 0.25); // 25th percentile
+      const median = d3.quantile(sortedHours, 0.5); // 50th percentile (median)
+      const q3 = d3.quantile(sortedHours, 0.75); // 75th percentile
+
+      return { min, q1, median, q3, max };
+    }
+
+    // Iterate over the grouped data to calculate the box plot stats for each category
+    groupedByGenderAndTime.forEach((sexGroups, gender) => {
+      sexGroups.forEach((entries, timeStatus) => {
+        const hours = entries.map((d) => d.annhrs); // Extract the hours worked data
+
+        // Compute the box plot statistics for hours worked
+        const stats = computeBoxPlotStats(hours);
+
+        // Calculate the median wage for the current group
+        const medianWage = d3.median(entries, (d) => d.incwage);
+
+        // Determine the category label based on gender and time status
+        const category = `${timeStatus} ${gender}`;
+
+        // Add the data to the hoursData array in the desired format, including quantiles for the box plot
+        hoursData.push({
+          category: category,
+          min: stats.min,
+          q1: stats.q1,
+          median: stats.median,
+          q3: stats.q3,
+          max: stats.max,
+          medianWage: Math.round(medianWage), // Median wage for the group
+        });
+      });
+    });
+
+    console.log("Hours Data:", hoursData);
+
+    educationData.length = 0; // Clear existing data
+    const educationGroups = d3.group(
+      genderPayGapData,
+      (d) => d.Education,
+      (d) => d.sex
+    );
+    // const educationData = [];
+
+    educationGroups.forEach((sexGroups, educationLevel) => {
+      const menEntries = sexGroups.get("Male") || [];
+      const womenEntries = sexGroups.get("Female") || [];
+
+      const avgMenWage = d3.mean(menEntries, (d) => d.incwage) || 0;
+      const avgWomenWage = d3.mean(womenEntries, (d) => d.incwage) || 0;
+      const gapPercentage = avgMenWage
+        ? Math.round(((avgMenWage - avgWomenWage) / avgMenWage) * 100 * 10) / 10
+        : 0;
+
+      educationData.push({
+        education: educationLevel,
+        menWage: Math.round(avgMenWage),
+        womenWage: Math.round(avgWomenWage),
+        gapPercentage: gapPercentage,
+      });
+    });
+
+    console.log("Education Data:", educationData);
+
+    console.log("Yearly Data:", yearlyData);
+
+    raceData.length = 0; // Clear existing data
+    const raceGroups = d3.group(genderPayGapData, (d) => d.race);
+
+    raceGroups.forEach((entries, race) => {
+      // Filter data by gender
+      const menEntries = entries.filter((d) => d.sex === "Male");
+      const womenEntries = entries.filter((d) => d.sex === "Female");
+
+      // Calculate average wage for men and women
+      const avgMenWage = d3.mean(menEntries, (d) => d.incwage) || 0;
+      const avgWomenWage = d3.mean(womenEntries, (d) => d.incwage) || 0;
+
+      // Add to the raceGenderData array in the desired format
+      raceData.push({
+        race: race,
+        menWage: Math.round(avgMenWage),
+        womenWage: Math.round(avgWomenWage),
+      });
+    });
+
+    console.log("Race and Gender Wage Data:", raceData);
+  });
 
   return {
     yearlyData,
     ageData,
     occupationData,
+    occupationProportionData,
     hoursData,
     educationData,
     raceData,

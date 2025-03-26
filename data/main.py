@@ -1,10 +1,13 @@
+import seaborn as sns
+import matplotlib.pyplot as plt
 import pandas as pd
 
 # Load the dataset
-df = pd.read_csv("gender-pay-gap-dataset_2.csv")
+df = pd.read_csv("data/gender-pay-gap-dataset_2.csv")
 print(df.columns)
 
-df['ft_status'] = df['ft'].replace({1: 'Full Time', 0: 'Part Time'})  # Assuming 'ft' is 1 for full-time
+# Assuming 'ft' is 1 for full-time
+df['ft_status'] = df['ft'].replace({1: 'Full Time', 0: 'Part Time'})
 
 # Drop the original 'ft' column
 df = df.drop(columns=['ft'])
@@ -93,20 +96,9 @@ df = df.drop(columns=['sch'])
 print(df['Education'].value_counts())
 
 
-
 # Save the modified DataFrame to a new CSV file
-df.to_csv("../gender-pay-gap-dataset-final.csv", index=False)
+df.to_csv("gender-pay-gap-dataset-final.csv", index=False)
 
-print("File saved successfully as 'gender-pay-gap-dataset-modified.csv'.")
 
-import matplotlib.pyplot as plt
-import seaborn as sns
 
-plt.figure(figsize=(10, 6))
-sns.boxplot(data=df, x='ft_status', y='annhrs', hue='sex', palette='Set2')
 
-# Set plot labels and title
-plt.title('Annual Hours Worked by Employment Status and Gender')
-plt.xlabel('Employment Status')
-plt.ylabel('Annual Hours Worked')
-plt.show()
