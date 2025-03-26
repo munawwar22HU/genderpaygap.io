@@ -23,17 +23,18 @@ let keyframes = [
   {
     activeVerse: 4,
     activeLines: [1, 2, 3, 4],
-    svgUpdate: () => drawHoursWorked(data.hoursData),
+    svgUpdate: drawBoxPlot,
   },
   {
     activeVerse: 5,
     activeLines: [1, 2, 3, 4],
-    svgUpdate: () => drawEducationLevels(data.educationData),
+    svgUpdate: drawEducationBar,
   },
   {
     activeVerse: 6,
     activeLines: [1, 2, 3, 4],
-    svgUpdate: () => drawRaceData(data.raceData),
+    svgUpdate: drawRaceBars,
+    // svgUpdate: () => drawRaceData(data.raceData),
   },
 ];
 
@@ -53,6 +54,17 @@ function drawStackedBarChart1() {
   showOccupationStackedBarChart(occupationProportionData);
 }
 
+function drawBoxPlot() {
+  drawHoursWorked(hoursData);
+}
+function drawEducationBar() {
+  drawCombinedEducationViz(educationData);
+}
+
+function drawRaceBars()
+{
+  drawRaceData(raceData);
+}
 // Load data from the dataset
 async function loadData() {
   try {
@@ -69,7 +81,10 @@ async function loadData() {
         annhrs: +d.annhrs,
         Occupation: d.Occupation,
         Education: d.Education,
+        ft: d.ft_status,
       }));
+
+      console.log("Loaded data:", genderPayGapData);
 
       // === Compute Average Wage by Year ===
       const groupedData = d3.group(
@@ -172,52 +187,112 @@ async function loadData() {
 
       console.log("Occupation Data:", occupationData);
       console.log("Occupation Proportion Data:", occupationProportionData);
+
+      const groupedByGenderAndTime = d3.group(
+        genderPayGapData,
+        (d) => d.sex,
+        (d) => d.ft
+      );
+
+      // Initialize an empty array to hold the formatted hours data for the box plot
+      hoursData.length = 0;
+
+      // Function to compute the box plot data (min, Q1, median, Q3, max)
+      function computeBoxPlotStats(hours) {
+        const sortedHours = hours.slice().sort(d3.ascending); // Sort the hours
+        const min = d3.min(sortedHours);
+        const max = d3.max(sortedHours);
+        const q1 = d3.quantile(sortedHours, 0.25); // 25th percentile
+        const median = d3.quantile(sortedHours, 0.5); // 50th percentile (median)
+        const q3 = d3.quantile(sortedHours, 0.75); // 75th percentile
+
+        return { min, q1, median, q3, max };
+      }
+
+      // Iterate over the grouped data to calculate the box plot stats for each category
+      groupedByGenderAndTime.forEach((sexGroups, gender) => {
+        sexGroups.forEach((entries, timeStatus) => {
+          const hours = entries.map((d) => d.annhrs); // Extract the hours worked data
+
+          // Compute the box plot statistics for hours worked
+          const stats = computeBoxPlotStats(hours);
+
+          // Calculate the median wage for the current group
+          const medianWage = d3.median(entries, (d) => d.incwage);
+
+          // Determine the category label based on gender and time status
+          const category = `${timeStatus} ${gender}`;
+
+          // Add the data to the hoursData array in the desired format, including quantiles for the box plot
+          hoursData.push({
+            category: category,
+            min: stats.min,
+            q1: stats.q1,
+            median: stats.median,
+            q3: stats.q3,
+            max: stats.max,
+            medianWage: Math.round(medianWage), // Median wage for the group
+          });
+        });
+      });
+
+      console.log("Hours Data:", hoursData);
+
+      educationData.length = 0; // Clear existing data
+      const educationGroups = d3.group(
+        genderPayGapData,
+        (d) => d.Education,
+        (d) => d.sex
+      );
+      // const educationData = [];
+
+      educationGroups.forEach((sexGroups, educationLevel) => {
+        const menEntries = sexGroups.get("Male") || [];
+        const womenEntries = sexGroups.get("Female") || [];
+
+        const avgMenWage = d3.mean(menEntries, (d) => d.incwage) || 0;
+        const avgWomenWage = d3.mean(womenEntries, (d) => d.incwage) || 0;
+        const gapPercentage = avgMenWage
+          ? Math.round(((avgMenWage - avgWomenWage) / avgMenWage) * 100 * 10) /
+            10
+          : 0;
+
+        educationData.push({
+          education: educationLevel,
+          menWage: Math.round(avgMenWage),
+          womenWage: Math.round(avgWomenWage),
+          gapPercentage: gapPercentage,
+        });
+      });
+
+      console.log("Education Data:", educationData);
+
+      console.log("Yearly Data:", yearlyData);
+
+      raceData.length = 0; // Clear existing data
+      const raceGroups = d3.group(genderPayGapData, (d) => d.race);
+
+      raceGroups.forEach((entries, race) => {
+        // Filter data by gender
+        const menEntries = entries.filter((d) => d.sex === "Male");
+        const womenEntries = entries.filter((d) => d.sex === "Female");
+
+        // Calculate average wage for men and women
+        const avgMenWage = d3.mean(menEntries, (d) => d.incwage) || 0;
+        const avgWomenWage = d3.mean(womenEntries, (d) => d.incwage) || 0;
+
+        // Add to the raceGenderData array in the desired format
+        raceData.push({
+          race: race,
+          menWage: Math.round(avgMenWage),
+          womenWage: Math.round(avgWomenWage),
+        });
+      });
+
+      console.log("Race and Gender Wage Data:", raceData);
     });
 
-    // 4. Hours Worked
-    const hoursData = [
-      {
-        category: "Part-time Men",
-        hours: [20, 22, 24, 25, 28, 30],
-        medianWage: 22000,
-      },
-      {
-        category: "Part-time Women",
-        hours: [18, 20, 22, 24, 26, 28],
-        medianWage: 19000,
-      },
-      {
-        category: "Full-time Men",
-        hours: [38, 40, 42, 45, 50, 55],
-        medianWage: 65000,
-      },
-      {
-        category: "Full-time Women",
-        hours: [38, 40, 42, 43, 45, 48],
-        medianWage: 52000,
-      },
-    ];
-
-    // 5. Education
-    const educationData = [
-      { education: "High School", menWage: 42000, womenWage: 35000 },
-      { education: "Some College", menWage: 50000, womenWage: 41000 },
-      { education: "Bachelor's", menWage: 75000, womenWage: 60000 },
-      { education: "Master's", menWage: 92000, womenWage: 75000 },
-      { education: "Doctoral", menWage: 120000, womenWage: 98000 },
-      { education: "Professional", menWage: 150000, womenWage: 125000 },
-    ];
-
-    // 6. Race
-    const raceData = [
-      { race: "White", menWage: 70000, womenWage: 58000 },
-      { race: "Black", menWage: 50000, womenWage: 45000 },
-      { race: "Hispanic", menWage: 52000, womenWage: 42000 },
-      { race: "Asian", menWage: 90000, womenWage: 75000 },
-      { race: "Native American", menWage: 48000, womenWage: 40000 },
-      { race: "Other", menWage: 55000, womenWage: 47000 },
-    ];
-
+   
     return {
       yearlyData,
       ageData,
@@ -764,6 +839,9 @@ let yearlyData = [];
 let ageData = [];
 let occupationData = [];
 let occupationProportionData = [];
+let hoursData = [];
+let educationData = [];
+let raceData = [];
 let data = {};
 
 // Clear SVG for new chart
@@ -1129,771 +1207,412 @@ function wrap(text, width) {
 }
 
 function showOccupationStackedBarChart(occupationData) {
-    clearChartArea();
-    currentChartType = "bar";
-
-    // Increase bottom margin to provide more space for rotated labels
-    const bottomMargin = 100;  // Increased margin for labels
-    const adjustedInnerHeight = innerHeight - bottomMargin;
-
-    // Create the container group
-    const g = svg.append("g").attr("transform", `translate(${margin.left}, ${margin.top})`);
-
-    // X-axis scale (categorical for occupations)
-    const xScale = d3.scaleBand()
-        .domain(occupationData.map(d => d.occupation))
-        .range([0, innerWidth])
-        .padding(0.2);
-
-    // Append x-axis with rotated labels
-    g.append("g")
-        .attr("transform", `translate(0, ${adjustedInnerHeight})`)
-        .call(d3.axisBottom(xScale).tickSize(0))
-        .selectAll("text")
-        .style("text-anchor", "start")
-        .attr("dx", "0.5em")
-        .attr("dy", "0")
-        .attr("transform", "rotate(45)");  // Rotate 45 degrees for readability
-
-    // Y-axis scale (percentage from 0 to 100)
-    const yScale = d3.scaleLinear().domain([0, 100]).range([adjustedInnerHeight, 0]);
-
-    // Append y-axis with label
-    const yAxis = g.append("g")
-        .call(d3.axisLeft(yScale).tickFormat(d => `${d}%`));
-
-    // Y-axis label
-    g.append("text")
-        .attr("transform", "rotate(-90)")
-        .attr("x", -adjustedInnerHeight / 2)
-        .attr("y", -40)  // Adjust this value to move label left or right
-        .attr("text-anchor", "middle")
-        .text("Percentage (%)");
-
-    // Define colors
-    const colors = { men: "#2563EB", women: "#DB2777" };
-
-    // Create groups for bars
-    const bars = g.selectAll(".bar-group")
-        .data(occupationData)
-        .enter()
-        .append("g")
-        .attr("transform", d => `translate(${xScale(d.occupation)}, 0)`);
-
-    // Draw men bars
-    bars.append("rect")
-        .attr("y", d => yScale(d.menPercentage))
-        .attr("height", d => adjustedInnerHeight - yScale(d.menPercentage))
-        .attr("width", xScale.bandwidth())
-        .attr("fill", colors.men);
-
-    // Draw women bars stacked on top
-    bars.append("rect")
-        .attr("y", d => yScale(d.menPercentage + d.womenPercentage))
-        .attr("height", d => adjustedInnerHeight - yScale(d.womenPercentage))
-        .attr("width", xScale.bandwidth())
-        .attr("fill", colors.women);
-
-    // Add legend - positioned inside the chart but not overlapping
-    const legend = g.append("g").attr("transform", `translate(${innerWidth - 120}, 20)`);
-
-    legend.append("rect").attr("x", 0).attr("y", 10).attr("width", 15).attr("height", 15).attr("fill", colors.men);
-    legend.append("text").attr("x", 25).attr("y", 22).text("Men");
-    legend.append("rect").attr("x", 0).attr("y", 35).attr("width", 15).attr("height", 15).attr("fill", colors.women);
-    legend.append("text").attr("x", 25).attr("y", 47).text("Women");
-
-    // Chart title
-    g.append("text")
-        .attr("x", innerWidth / 2)
-        .attr("y", -20)
-        .attr("text-anchor", "middle")
-        .attr("class", "chart-title")
-        .text("Gender Proportion by Occupation");
-}function showOccupationStackedBarChart(occupationData) {
-    clearChartArea();
-    currentChartType = "bar";
-
-    // Increase bottom margin to provide more space for rotated labels
-    const bottomMargin = 100;  // Increased margin for labels
-    const adjustedInnerHeight = innerHeight - bottomMargin;
-
-    // Create the container group
-    const g = svg.append("g").attr("transform", `translate(${margin.left}, ${margin.top})`);
-
-    // X-axis scale (categorical for occupations)
-    const xScale = d3.scaleBand()
-        .domain(occupationData.map(d => d.occupation))
-        .range([0, innerWidth])
-        .padding(0.2);
-
-    // Append x-axis with rotated labels
-    g.append("g")
-        .attr("transform", `translate(0, ${adjustedInnerHeight})`)
-        .call(d3.axisBottom(xScale).tickSize(0))
-        .selectAll("text")
-        .style("text-anchor", "start")
-        .attr("dx", "0.5em")
-        .attr("dy", "0")
-        .attr("transform", "rotate(45)");  // Rotate 45 degrees instead of 90 for better readability
-
-    // Y-axis scale (percentage from 0 to 100)
-    const yScale = d3.scaleLinear().domain([0, 100]).range([adjustedInnerHeight, 0]);
-
-    g.append("g")
-        .call(d3.axisLeft(yScale).tickFormat(d => `${d}%`));
-
-    // Define colors
-    const colors = { men: "#2563EB", women: "#DB2777" };
-
-    // Create groups for bars
-    const bars = g.selectAll(".bar-group")
-        .data(occupationData)
-        .enter()
-        .append("g")
-        .attr("transform", d => `translate(${xScale(d.occupation)}, 0)`);
-
-    // Draw men bars
-    bars.append("rect")
-        .attr("y", d => yScale(d.menPercentage))
-        .attr("height", d => adjustedInnerHeight - yScale(d.menPercentage))
-        .attr("width", xScale.bandwidth())
-        .attr("fill", colors.men);
-
-    // Draw women bars stacked on top
-    bars.append("rect")
-        .attr("y", d => yScale(d.menPercentage + d.womenPercentage))
-        .attr("height", d => adjustedInnerHeight - yScale(d.womenPercentage))
-        .attr("width", xScale.bandwidth())
-        .attr("fill", colors.women);
-
-    // Add legend at bottom left
-    const legend = g.append("g").attr("transform", `translate(10, ${adjustedInnerHeight + 50})`);
-
-    legend.append("rect").attr("x", 0).attr("y", 10).attr("width", 15).attr("height", 15).attr("fill", colors.men);
-    legend.append("text").attr("x", 25).attr("y", 22).text("Men");
-    legend.append("rect").attr("x", 0).attr("y", 35).attr("width", 15).attr("height", 15).attr("fill", colors.women);
-    legend.append("text").attr("x", 25).attr("y", 47).text("Women");
-
-    // Chart title
-    g.append("text")
-        .attr("x", innerWidth / 2)
-        .attr("y", -20)
-        .attr("text-anchor", "middle")
-        .attr("class", "chart-title")
-        .text("Gender Proportion by Occupation");
-}
-
-
-
-
-
-
-// Show occupation distribution as pie charts
-function showOccupationPieCharts(occupationData) {
   clearChartArea();
-  currentChartType = "pie";
+  currentChartType = "bar";
+
+  // Increase bottom margin to provide more space for rotated labels
+  const bottomMargin = 100; // Increased margin for labels
+  const adjustedInnerHeight = innerHeight - bottomMargin;
 
   // Create the container group
-  g = svg
+  const g = svg
     .append("g")
     .attr("transform", `translate(${margin.left}, ${margin.top})`);
 
-  // Add chart title
-  g.append("text")
-    .attr("class", "chart-title")
-    .attr("x", innerWidth / 2)
-    .attr("y", -20)
-    .attr("text-anchor", "middle")
-    .attr("font-weight", "bold")
-    .text("Occupational Distribution by Gender");
+  // X-axis scale (categorical for occupations)
+  const xScale = d3
+    .scaleBand()
+    .domain(occupationData.map((d) => d.occupation))
+    .range([0, innerWidth])
+    .padding(0.2);
 
-  // Setup data for pie charts
-  // Male distribution data (percentages of workforce)
-  const maleData = [
-    { occupation: "Management", percentage: 22 },
-    { occupation: "Technology", percentage: 18 },
-    { occupation: "Finance", percentage: 14 },
-    { occupation: "Healthcare", percentage: 13 },
-    { occupation: "Education", percentage: 12 },
-    { occupation: "Retail", percentage: 21 },
-  ];
+  // Append x-axis with rotated labels
+  g.append("g")
+    .attr("transform", `translate(0, ${adjustedInnerHeight})`)
+    .call(d3.axisBottom(xScale).tickSize(0))
+    .selectAll("text")
+    .style("text-anchor", "start")
+    .attr("dx", "0.5em")
+    .attr("dy", "0")
+    .attr("transform", "rotate(45)"); // Rotate 45 degrees for readability
 
-  // Female distribution data
-  const femaleData = [
-    { occupation: "Management", percentage: 18 },
-    { occupation: "Technology", percentage: 10 },
-    { occupation: "Finance", percentage: 13 },
-    { occupation: "Healthcare", percentage: 22 },
-    { occupation: "Education", percentage: 20 },
-    { occupation: "Retail", percentage: 17 },
-  ];
+  // Y-axis scale (percentage from 0 to 100)
+  const yScale = d3
+    .scaleLinear()
+    .domain([0, 100])
+    .range([adjustedInnerHeight, 0]);
 
-  // Draw male pie chart in left half
-  drawPieChart(
-    maleData,
-    innerWidth / 4,
-    innerHeight / 2,
-    Math.min(innerWidth, innerHeight) / 4,
-    "Male Employment by Occupation",
-    "blue"
-  );
-
-  // Draw female pie chart in right half
-  drawPieChart(
-    femaleData,
-    (innerWidth * 3) / 4,
-    innerHeight / 2,
-    Math.min(innerWidth, innerHeight) / 4,
-    "Female Employment by Occupation",
-    "pink"
-  );
-}
-
-// Function to draw a pie chart
-function drawPieChart(data, centerX, centerY, radius, title, colorScheme) {
-  // Create pie layout
-  const pie = d3
-    .pie()
-    .value((d) => d.percentage)
-    .sort(null);
-
-  // Create arc generator
-  const arc = d3.arc().innerRadius(0).outerRadius(radius);
-
-  // Choose color scheme based on parameter
-  let colorScale;
-  if (colorScheme === "blue") {
-    colorScale = d3
-      .scaleOrdinal()
-      .domain(data.map((d) => d.occupation))
-      .range([
-        "#1e40af",
-        "#3b82f6",
-        "#93c5fd", // Blues
-        "#8b5cf6",
-        "#c084fc", // Purples
-        "#ef4444", // Red
-      ]);
-  } else {
-    colorScale = d3
-      .scaleOrdinal()
-      .domain(data.map((d) => d.occupation))
-      .range([
-        "#db2777",
-        "#ec4899",
-        "#f472b6", // Pinks
-        "#be185d",
-        "#9d174d", // Darker pinks
-        "#fb7185", // Light red
-      ]);
-  }
-
-  // Add title for this pie chart
-  g.append("text")
-    .attr("x", centerX)
-    .attr("y", centerY - radius - 20)
-    .attr("text-anchor", "middle")
-    .attr("font-weight", "bold")
-    .text(title);
-
-  // Create pie chart group
-  const pieG = g
+  // Append y-axis with label
+  const yAxis = g
     .append("g")
-    .attr("transform", `translate(${centerX}, ${centerY})`);
+    .call(d3.axisLeft(yScale).tickFormat((d) => `${d}%`));
 
-  // Draw pie slices with animation
-  const slices = pieG
-    .selectAll(".slice")
-    .data(pie(data))
+  // Y-axis label
+  g.append("text")
+    .attr("transform", "rotate(-90)")
+    .attr("x", -adjustedInnerHeight / 2)
+    .attr("y", -40) // Adjust this value to move label left or right
+    .attr("text-anchor", "middle")
+    .text("Percentage (%)");
+
+  // Define colors
+  const colors = { men: "#2563EB", women: "#DB2777" };
+
+  // Create groups for bars
+  const bars = g
+    .selectAll(".bar-group")
+    .data(occupationData)
     .enter()
     .append("g")
-    .attr("class", "slice");
+    .attr("transform", (d) => `translate(${xScale(d.occupation)}, 0)`);
 
-  slices
-    .append("path")
-    .attr("d", (d) => arc(d))
-    .attr("fill", (d, i) => colorScale(d.data.occupation))
-    .attr("stroke", "white")
-    .attr("stroke-width", 2)
-    .style("opacity", 0)
-    .transition()
-    .duration(800)
-    .style("opacity", 1);
+  // Draw men bars
+  bars
+    .append("rect")
+    .attr("y", (d) => yScale(d.menPercentage))
+    .attr("height", (d) => adjustedInnerHeight - yScale(d.menPercentage))
+    .attr("width", xScale.bandwidth())
+    .attr("fill", colors.men);
 
-  // Add labels with lines
-  slices
-    .append("line")
-    .attr("x1", (d) => arc.centroid(d)[0] * 1.2)
-    .attr("y1", (d) => arc.centroid(d)[1] * 1.2)
-    .attr("x2", (d) => {
-      const centroid = arc.centroid(d);
-      const midAngle = Math.atan2(centroid[1], centroid[0]);
-      return Math.cos(midAngle) * (radius + 20);
-    })
-    .attr("y2", (d) => {
-      const centroid = arc.centroid(d);
-      const midAngle = Math.atan2(centroid[1], centroid[0]);
-      return Math.sin(midAngle) * (radius + 20);
-    })
-    .attr("stroke", "black")
-    .style("opacity", 0)
-    .transition()
-    .delay(600)
-    .duration(500)
-    .style("opacity", 1);
+  // Draw women bars stacked on top
+  bars
+    .append("rect")
+    .attr("y", (d) => yScale(d.menPercentage + d.womenPercentage))
+    .attr("height", (d) => adjustedInnerHeight - yScale(d.womenPercentage))
+    .attr("width", xScale.bandwidth())
+    .attr("fill", colors.women);
 
-  slices
-    .append("text")
-    .attr("transform", (d) => {
-      const centroid = arc.centroid(d);
-      const midAngle = Math.atan2(centroid[1], centroid[0]);
-      const x = Math.cos(midAngle) * (radius + 30);
-      const y = Math.sin(midAngle) * (radius + 30);
-      return `translate(${x}, ${y})`;
-    })
-    .attr("text-anchor", (d) => {
-      const centroid = arc.centroid(d);
-      return centroid[0] > 0 ? "start" : "end";
-    })
-    .text((d) => `${d.data.occupation}: ${d.data.percentage}%`)
-    .style("font-size", "12px")
-    .style("opacity", 0)
-    .transition()
-    .delay(700)
-    .duration(500)
-    .style("opacity", 1);
-}
-
-// Function to toggle to pie charts view (similar to Image 2)
-function toggleToPieCharts(data) {
-  // Clear previous chart
-  g.selectAll("*").remove();
-
-  // Add chart title
-  g.append("text")
-    .attr("class", "chart-title")
-    .attr("x", innerWidth / 2)
-    .attr("y", -20)
-    .attr("text-anchor", "middle")
-    .text("Income Distribution by Occupation and Gender");
-
-  // Setup data for pie charts
-  const occupations = [
-    "Management",
-    "Professional",
-    "Service",
-    "Sales",
-    "Office Admin",
-    "Construction",
-    "Production",
-  ];
-
-  // Generate percentages that sum to 100% for each gender
-  // Male distribution data (matching Image 2 approximately)
-  const maleData = [
-    { occupation: "Management", percentage: 23 },
-    { occupation: "Professional", percentage: 20 },
-    { occupation: "Service", percentage: 9 },
-    { occupation: "Sales", percentage: 13 },
-    { occupation: "Office Admin", percentage: 11 },
-    { occupation: "Construction", percentage: 12 },
-    { occupation: "Production", percentage: 11 },
-  ];
-
-  // Female distribution data (matching Image 2 approximately)
-  const femaleData = [
-    { occupation: "Management", percentage: 22 },
-    { occupation: "Professional", percentage: 20 },
-    { occupation: "Service", percentage: 9 },
-    { occupation: "Sales", percentage: 12 },
-    { occupation: "Office Admin", percentage: 13 },
-    { occupation: "Construction", percentage: 14 },
-    { occupation: "Production", percentage: 11 },
-  ];
-
-  // Draw male pie chart in top half
-  drawPieChart(
-    maleData,
-    innerWidth / 2,
-    innerHeight / 4,
-    Math.min(innerWidth, innerHeight) / 3,
-    "Male Income by Occupation",
-    "blue"
-  );
-
-  // Draw female pie chart in bottom half
-  drawPieChart(
-    femaleData,
-    innerWidth / 2,
-    (innerHeight * 3) / 4,
-    Math.min(innerWidth, innerHeight) / 3,
-    "Female Income by Occupation",
-    "yellow"
-  );
-
-  // Add button to toggle back to bar chart
-  const toggleButton = g
+  // Add legend - positioned inside the chart but not overlapping
+  const legend = g
     .append("g")
-    .attr("class", "toggle-button")
-    .attr("transform", `translate(${innerWidth - 120}, ${innerHeight - 30})`)
-    .style("cursor", "pointer")
-    .on("click", () => drawHorizontalBars(data));
+    .attr("transform", `translate(${innerWidth - 120}, 20)`);
 
-  toggleButton
+  legend
     .append("rect")
     .attr("x", 0)
-    .attr("y", 0)
-    .attr("width", 120)
-    .attr("height", 30)
-    .attr("fill", "#4682B4")
-    .attr("rx", 5);
+    .attr("y", 10)
+    .attr("width", 15)
+    .attr("height", 15)
+    .attr("fill", colors.men);
+  legend.append("text").attr("x", 25).attr("y", 22).text("Men");
+  legend
+    .append("rect")
+    .attr("x", 0)
+    .attr("y", 35)
+    .attr("width", 15)
+    .attr("height", 15)
+    .attr("fill", colors.women);
+  legend.append("text").attr("x", 25).attr("y", 47).text("Women");
 
-  toggleButton
-    .append("text")
-    .attr("x", 60)
-    .attr("y", 20)
-    .attr("text-anchor", "middle")
-    .attr("fill", "white")
-    .text("Show Bar Chart");
-}
-
-// Function to draw a pie chart
-function drawPieChart(data, centerX, centerY, radius, title, colorScheme) {
-  // Create pie layout
-  const pie = d3
-    .pie()
-    .value((d) => d.percentage)
-    .sort(null);
-
-  // Create arc generator
-  const arc = d3.arc().innerRadius(0).outerRadius(radius);
-
-  // Choose color scheme based on parameter
-  let colorScale;
-  if (colorScheme === "blue") {
-    colorScale = d3
-      .scaleOrdinal()
-      .domain(data.map((d) => d.occupation))
-      .range([
-        "#1e40af",
-        "#3b82f6",
-        "#93c5fd", // Blues
-        "#8b5cf6",
-        "#c084fc", // Purples
-        "#ef4444",
-        "#f97316", // Red and Orange
-      ]);
-  } else {
-    colorScale = d3
-      .scaleOrdinal()
-      .domain(data.map((d) => d.occupation))
-      .range([
-        "#f59e0b",
-        "#fcd34d", // Yellows
-        "#10b981",
-        "#34d399",
-        "#6ee7b7", // Greens
-        "#0ea5e9",
-        "#7dd3fc", // Light Blues
-      ]);
-  }
-
-  // Add title for this pie chart
+  // Chart title
   g.append("text")
-    .attr("x", centerX)
-    .attr("y", centerY - radius - 10)
+    .attr("x", innerWidth / 2)
+    .attr("y", -20)
     .attr("text-anchor", "middle")
-    .attr("font-weight", "bold")
-    .text(title);
+    .attr("class", "chart-title")
+    .text("Gender Proportion by Occupation");
+}
+function showOccupationStackedBarChart(occupationData) {
+  clearChartArea();
+  currentChartType = "bar";
 
-  // Create pie chart group
-  const pieG = g
+  // Increase bottom margin to provide more space for rotated labels
+  const bottomMargin = 100; // Increased margin for labels
+  const adjustedInnerHeight = innerHeight - bottomMargin;
+
+  // Create the container group
+  const g = svg
     .append("g")
-    .attr("transform", `translate(${centerX}, ${centerY})`);
+    .attr("transform", `translate(${margin.left}, ${margin.top})`);
 
-  // Draw pie slices with animation
-  const slices = pieG
-    .selectAll(".slice")
-    .data(pie(data))
+  // X-axis scale (categorical for occupations)
+  const xScale = d3
+    .scaleBand()
+    .domain(occupationData.map((d) => d.occupation))
+    .range([0, innerWidth])
+    .padding(0.2);
+
+  // Append x-axis with rotated labels
+  g.append("g")
+    .attr("transform", `translate(0, ${adjustedInnerHeight})`)
+    .call(d3.axisBottom(xScale).tickSize(0))
+    .selectAll("text")
+    .style("text-anchor", "start")
+    .attr("dx", "0.5em")
+    .attr("dy", "0")
+    .attr("transform", "rotate(45)"); // Rotate 45 degrees instead of 90 for better readability
+
+  // Y-axis scale (percentage from 0 to 100)
+  const yScale = d3
+    .scaleLinear()
+    .domain([0, 100])
+    .range([adjustedInnerHeight, 0]);
+
+  g.append("g").call(d3.axisLeft(yScale).tickFormat((d) => `${d}%`));
+
+  // Define colors
+  const colors = { men: "#2563EB", women: "#DB2777" };
+
+  // Create groups for bars
+  const bars = g
+    .selectAll(".bar-group")
+    .data(occupationData)
     .enter()
     .append("g")
-    .attr("class", "slice");
+    .attr("transform", (d) => `translate(${xScale(d.occupation)}, 0)`);
 
-  slices
-    .append("path")
-    .attr("d", (d) => arc(d))
-    .attr("fill", (d, i) => colorScale(d.data.occupation))
-    .attr("stroke", "white")
-    .attr("stroke-width", 2)
-    .style("opacity", 0)
-    .transition()
-    .duration(800)
-    .style("opacity", 1);
+  // Draw men bars
+  bars
+    .append("rect")
+    .attr("y", (d) => yScale(d.menPercentage))
+    .attr("height", (d) => adjustedInnerHeight - yScale(d.menPercentage))
+    .attr("width", xScale.bandwidth())
+    .attr("fill", colors.men);
 
-  // Add labels with lines
-  slices
-    .append("line")
-    .attr("x1", (d) => arc.centroid(d)[0] * 1.2)
-    .attr("y1", (d) => arc.centroid(d)[1] * 1.2)
-    .attr("x2", (d) => {
-      const centroid = arc.centroid(d);
-      const midAngle = Math.atan2(centroid[1], centroid[0]);
-      return Math.cos(midAngle) * (radius + 20);
-    })
-    .attr("y2", (d) => {
-      const centroid = arc.centroid(d);
-      const midAngle = Math.atan2(centroid[1], centroid[0]);
-      return Math.sin(midAngle) * (radius + 20);
-    })
-    .attr("stroke", (d) => colorScale(d.data.occupation))
-    .style("opacity", 0)
-    .transition()
-    .delay(600)
-    .duration(500)
-    .style("opacity", 1);
+  // Draw women bars stacked on top
+  bars
+    .append("rect")
+    .attr("y", (d) => yScale(d.menPercentage + d.womenPercentage))
+    .attr("height", (d) => adjustedInnerHeight - yScale(d.womenPercentage))
+    .attr("width", xScale.bandwidth())
+    .attr("fill", colors.women);
 
-  slices
-    .append("text")
-    .attr("transform", (d) => {
-      const centroid = arc.centroid(d);
-      const midAngle = Math.atan2(centroid[1], centroid[0]);
-      const x = Math.cos(midAngle) * (radius + 30);
-      const y = Math.sin(midAngle) * (radius + 30);
-      return `translate(${x}, ${y})`;
-    })
-    .attr("text-anchor", (d) => {
-      const centroid = arc.centroid(d);
-      return centroid[0] > 0 ? "start" : "end";
-    })
-    .text((d) => `${d.data.occupation}: ${d.data.percentage}%`)
-    .style("font-size", "12px")
-    .attr("fill", (d) => colorScale(d.data.occupation))
-    .style("opacity", 0)
-    .transition()
-    .delay(700)
-    .duration(500)
-    .style("opacity", 1);
+  // Add legend at bottom left
+  const legend = g
+    .append("g")
+    .attr("transform", `translate(10, ${adjustedInnerHeight + 50})`);
+
+  legend
+    .append("rect")
+    .attr("x", 0)
+    .attr("y", 10)
+    .attr("width", 15)
+    .attr("height", 15)
+    .attr("fill", colors.men);
+  legend.append("text").attr("x", 25).attr("y", 22).text("Men");
+  legend
+    .append("rect")
+    .attr("x", 0)
+    .attr("y", 35)
+    .attr("width", 15)
+    .attr("height", 15)
+    .attr("fill", colors.women);
+  legend.append("text").attr("x", 25).attr("y", 47).text("Women");
+
+  // Chart title
+  g.append("text")
+    .attr("x", innerWidth / 2)
+    .attr("y", -20)
+    .attr("text-anchor", "middle")
+    .attr("class", "chart-title")
+    .text("Gender Proportion by Occupation");
 }
-
-// Draw hours worked visualization - FIXED to prevent overlap between box plot and bar chart
 function drawHoursWorked(hoursData) {
   clearChartArea();
   currentChartType = "box";
 
-  // Create boxplot-ready data
+  // Create boxplot-ready data from the hoursData
   const boxplotData = hoursData.map((d) => ({
     category: d.category,
-    min: d.hours[0],
-    q1: d.hours[1],
-    median: d.hours[2],
-    q3: d.hours[4],
-    max: d.hours[5],
+    min: d.min,
+    q1: d.q1,
+    median: d.median,
+    q3: d.q3,
+    max: d.max,
     medianWage: d.medianWage,
-    hourlyRate: Math.round(d.medianWage / d.hours[2] / 52),
   }));
 
+  // Enhanced margins with more proportional spacing
+  const margin = { top: 80, right: 100, bottom: 100, left: 220 };
+  const innerWidth = width - margin.left - margin.right;
+  const innerHeight = height - margin.top - margin.bottom;
+
   // Create the container group
-  g = svg
+  const g = svg
     .append("g")
     .attr("transform", `translate(${margin.left}, ${margin.top})`);
 
-  // Add title
+  // Improved title with more styling
   g.append("text")
     .attr("class", "chart-title")
     .attr("x", innerWidth / 2)
-    .attr("y", -20)
+    .attr("y", -50)
     .attr("text-anchor", "middle")
-    .text("Hours Worked Distribution & Hourly Pay");
+    .attr("font-size", "18px")
+    .attr("font-weight", "bold")
+    .style("fill", "#333")
+    .text("Hours Worked Distribution & Median Wage");
 
-  // Y axis scale and axis for the boxplot
+  // Y axis scale and axis for the boxplot with improved styling
   const y = d3
     .scaleBand()
     .domain(boxplotData.map((d) => d.category))
-    .range([0, innerHeight / 2 - 30]) // Reduced height to prevent overlap
-    .padding(0.2);
-
-  g.append("g").attr("transform", `translate(0, 0)`).call(d3.axisLeft(y));
-
-  // X axis scale and axis for the boxplot
-  const x = d3.scaleLinear().domain([15, 60]).range([0, innerWidth]);
+    .range([0, innerHeight])
+    .padding(0.3);
 
   g.append("g")
-    .attr("transform", `translate(0, ${innerHeight / 2 - 30})`) // Adjusted position
-    .call(d3.axisBottom(x));
+    .call(d3.axisLeft(y).tickSize(0))
+    .selectAll("text")
+    .style("text-anchor", "end")
+    .style("font-size", "12px")
+    .style("fill", "#666")
+    .attr("dx", "-0.5em");
 
-  // Add X axis label for boxplot
+  // X axis scale and axis for the boxplot with more intelligent domain
+  const x = d3
+    .scaleLinear()
+    .domain([
+      Math.min(
+        0,
+        d3.min(boxplotData, (d) => d.min)
+      ),
+      Math.max(
+        60,
+        d3.max(boxplotData, (d) => d.max)
+      ),
+    ])
+    .range([0, innerWidth]);
+
+  g.append("g")
+    .attr("transform", `translate(0, ${innerHeight})`)
+    .call(d3.axisBottom(x).ticks(8))
+    .selectAll("text")
+    .style("font-size", "10px")
+    .style("fill", "#666");
+
+  // Add X axis label with improved styling
   g.append("text")
     .attr("x", innerWidth / 2)
-    .attr("y", innerHeight / 2) // Adjusted position
+    .attr("y", innerHeight + 50)
     .attr("text-anchor", "middle")
+    .style("font-size", "12px")
+    .style("fill", "#666")
     .text("Hours per Week");
 
-  // Box plots with animation
+  // Enhanced box plots with smoother color gradients
   boxplotData.forEach((d, i) => {
     const boxHeight = y.bandwidth();
     const category = d.category;
     const yPos = y(category);
-    const color = category.includes("Men") ? "#2563EB" : "#DB2777";
 
-    // Animation timing
-    const delay = i * 200;
+    // Color with soft gradient
+    const baseColor = category.includes("Male") ? "#2563EB" : "#DB2777";
+    const lightColor = d3.color(baseColor).brighter(0.5);
 
-    // Min-max line
+    // Min-max line with softer stroke
     g.append("line")
       .attr("x1", x(d.min))
-      .attr("x2", x(d.min))
+      .attr("x2", x(d.max))
       .attr("y1", yPos + boxHeight / 2)
       .attr("y2", yPos + boxHeight / 2)
-      .attr("stroke", "black")
-      .attr("stroke-width", 1.5)
-      .transition()
-      .delay(delay)
-      .duration(500)
-      .attr("x2", x(d.max));
+      .attr("stroke", "#999")
+      .attr("stroke-width", 1);
 
-    // Max whisker
-    g.append("line")
-      .attr("x1", x(d.max))
-      .attr("x2", x(d.max))
-      .attr("y1", yPos + boxHeight / 2 - 5)
-      .attr("y2", yPos + boxHeight / 2 + 5)
-      .attr("stroke", "black")
-      .attr("stroke-width", 1.5)
-      .attr("opacity", 0)
-      .transition()
-      .delay(delay + 500)
-      .duration(300)
-      .attr("opacity", 1);
+    // Whiskers with soft caps
+    ["min", "max"].forEach((type) => {
+      g.append("line")
+        .attr("x1", x(d[type]))
+        .attr("x2", x(d[type]))
+        .attr("y1", yPos + boxHeight / 2 - 4)
+        .attr("y2", yPos + boxHeight / 2 + 4)
+        .attr("stroke", "#666")
+        .attr("stroke-width", 1.5);
+    });
 
-    // Min whisker
-    g.append("line")
-      .attr("x1", x(d.min))
-      .attr("x2", x(d.min))
-      .attr("y1", yPos + boxHeight / 2 - 5)
-      .attr("y2", yPos + boxHeight / 2 + 5)
-      .attr("stroke", "black")
-      .attr("stroke-width", 1.5)
-      .attr("opacity", 0)
-      .transition()
-      .delay(delay + 500)
-      .duration(300)
-      .attr("opacity", 1);
-
-    // Box from Q1 to Q3
+    // Box with gradient and soft shadow
     g.append("rect")
       .attr("x", x(d.q1))
       .attr("y", yPos + boxHeight / 4)
-      .attr("width", 0)
+      .attr("width", x(d.q3) - x(d.q1))
       .attr("height", boxHeight / 2)
-      .attr("fill", color)
-      .attr("stroke", "black")
-      .attr("stroke-width", 1)
-      .transition()
-      .delay(delay + 500)
-      .duration(500)
-      .attr("width", x(d.q3) - x(d.q1));
+      .attr("fill", lightColor)
+      .attr("stroke", baseColor)
+      .attr("stroke-width", 1.5)
+      .attr("opacity", 0.8)
+      .attr("filter", "url(#drop-shadow)");
 
-    // Median line
+    // Median line with emphasis
     g.append("line")
       .attr("x1", x(d.median))
       .attr("x2", x(d.median))
       .attr("y1", yPos + boxHeight / 4)
       .attr("y2", yPos + (boxHeight * 3) / 4)
-      .attr("stroke", "black")
-      .attr("stroke-width", 2)
-      .attr("opacity", 0)
-      .transition()
-      .delay(delay + 800)
-      .duration(300)
-      .attr("opacity", 1);
+      .attr("stroke", "#000")
+      .attr("stroke-width", 2.5);
 
-    // Add annotation for median wage
+    // Enhanced median wage annotation
     g.append("text")
-      .attr("x", x(d.median) + 5)
-      .attr("y", yPos + (boxHeight * 3) / 4 + 15)
-      .attr("font-size", "12px")
-      .text(`${d.medianWage.toLocaleString()} annual`)
-      .attr("opacity", 0)
-      .transition()
-      .delay(delay + 1000)
-      .duration(300)
-      .attr("opacity", 1);
+      .attr("x", x(d.max) + 15)
+      .attr("y", yPos + boxHeight / 2)
+      .attr("font-size", "11px")
+      .attr("font-weight", "bold")
+      .attr("fill", "#444")
+      .text(`$${d.medianWage.toLocaleString()} annual`)
+      .attr("alignment-baseline", "middle");
   });
 
-  // Create the hourly rate bar chart with proper spacing
-  // X axis scale for the bar chart
-  const hourlyX = d3
-    .scaleBand()
-    .domain(boxplotData.map((d) => d.category))
-    .range([0, innerWidth])
-    .padding(0.3);
+  // Modern, centered legend with soft hover effect
+  const legendGroup = svg
+    .append("g")
+    .attr(
+      "transform",
+      `translate(${margin.left + (innerWidth - 250) / 2}, ${height - 70})`
+    );
 
-  // Y axis scale for the bar chart - starts at innerHeight/2 + 40 to create space
-  const hourlyY = d3
-    .scaleLinear()
-    .domain([0, d3.max(boxplotData, (d) => d.hourlyRate) * 1.2])
-    .range([innerHeight, innerHeight / 2 + 40]); // Adjusted to start below the boxplot
+  const legendItems = [
+    { color: "#2563EB", label: "Male" },
+    { color: "#DB2777", label: "Female" },
+  ];
 
-  // Draw X axis for hourly chart
-  g.append("g")
-    .attr("transform", `translate(0, ${innerHeight})`)
-    .call(d3.axisBottom(hourlyX));
+  // Add drop shadow definition
+  svg
+    .append("defs")
+    .append("filter")
+    .attr("id", "drop-shadow")
+    .append("feDropShadow")
+    .attr("dx", "1")
+    .attr("dy", "1")
+    .attr("stdDeviation", "1");
 
-  // Draw Y axis for hourly chart
-  g.append("g")
-    .attr("transform", `translate(0, 0)`)
-    .call(d3.axisLeft(hourlyY).tickFormat((d) => `${d}`));
+  // Legend with hover interactions
+  const legendContainer = legendGroup
+    .append("rect")
+    .attr("width", 250)
+    .attr("height", 40)
+    .attr("fill", "#f4f4f4")
+    .attr("rx", 10)
+    .attr("ry", 10)
+    .attr("stroke", "#ddd")
+    .attr("stroke-width", 1);
 
-  // Add Y axis label for bar chart
-  g.append("text")
-    .attr("transform", "rotate(-90)")
-    .attr("y", -40)
-    .attr("x", (-innerHeight * 3) / 4)
-    .attr("text-anchor", "middle")
-    .text("Hourly Rate ($)");
-
-  // Add hourly chart title with proper spacing
-  g.append("text")
-    .attr("x", innerWidth / 2)
-    .attr("y", innerHeight / 2 + 30) // Adjusted position
-    .attr("text-anchor", "middle")
-    .attr("font-weight", "bold")
-    .text("Hourly Pay Rate");
-
-  // Add bars with animation
-  g.selectAll(".hourly-bar")
-    .data(boxplotData)
+  legendGroup
+    .selectAll("rect.legend-item")
+    .data(legendItems)
     .enter()
     .append("rect")
-    .attr("class", "hourly-bar")
-    .attr("x", (d) => hourlyX(d.category))
-    .attr("y", innerHeight)
-    .attr("width", hourlyX.bandwidth())
-    .attr("height", 0)
-    .attr("fill", (d) => (d.category.includes("Men") ? "#2563EB" : "#DB2777"))
-    .transition()
-    .delay((d, i) => 1200 + i * 200)
-    .duration(800)
-    .attr("y", (d) => hourlyY(d.hourlyRate))
-    .attr("height", (d) => innerHeight - hourlyY(d.hourlyRate));
+    .attr("class", "legend-item")
+    .attr("x", (d, i) => 25 + i * 125)
+    .attr("y", 10)
+    .attr("width", 20)
+    .attr("height", 20)
+    .attr("fill", (d) => d.color)
+    .attr("stroke", "#333")
+    .attr("stroke-width", 1)
+    .attr("rx", 4)
+    .attr("ry", 4);
 
-  // Add value labels above bars
-  g.selectAll(".hourly-label")
-    .data(boxplotData)
+  legendGroup
+    .selectAll("text.legend-label")
+    .data(legendItems)
     .enter()
     .append("text")
-    .attr("class", "hourly-label")
-    .attr("x", (d) => hourlyX(d.category) + hourlyX.bandwidth() / 2)
-    .attr("y", (d) => hourlyY(d.hourlyRate) - 5)
-    .attr("text-anchor", "middle")
-    .attr("opacity", 0)
-    .text((d) => `${d.hourlyRate}`)
-    .transition()
-    .delay((d, i) => 2000 + i * 200)
-    .duration(300)
-    .attr("opacity", 1);
+    .attr("x", (d, i) => 50 + i * 125)
+    .attr("y", 25)
+    .attr("text-anchor", "start")
+    .attr("font-size", "12px")
+    .attr("fill", "#333")
+    .text((d) => d.label);
 }
-
 // Draw race data visualization - FIXED to prevent bar overlap
 function drawRaceData(raceData) {
   clearChartArea();
@@ -2217,131 +1936,184 @@ function drawOccupations(occupationData) {
 }
 
 // Draw education levels visualization (with gap part removed)
-function drawEducationLevels(educationData) {
+function drawCombinedEducationViz(educationData) {
   clearChartArea();
   currentChartType = "bar";
 
-  // For ordering education levels properly
+  // Predefined education level order
   const educationOrder = [
-    "Less than HS",
-    "High School",
+    "None",
+    "Grade 1",
+    "Grade 2",
+    "Grade 3",
+    "Grade 4",
+    "Grade 5",
+    "Grade 6",
+    "Grade 7",
+    "Grade 8",
+    "Grade 9",
+    "Grade 10",
+    "Grade 11",
+    "Grade 12",
     "Some College",
-    "Bachelor's",
-    "Master's",
-    "Professional/PhD",
+    "Associate",
+    "Bachelors",
+    "Advanced Degree",
   ];
 
-  // Sort data by education level
+  // Sort data by education level (using the same logic as occupation viz)
   const sortedData = [...educationData].sort(
     (a, b) =>
       educationOrder.indexOf(a.education) - educationOrder.indexOf(b.education)
   );
 
-  // Create the container group
+  // Increase left margin to accommodate longer education labels
+  const adjustedMargin = { ...margin, left: margin.left + 100 };
+
+  // Create the container group with adjusted margin
   g = svg
     .append("g")
-    .attr("transform", `translate(${margin.left}, ${margin.top})`);
+    .attr(
+      "transform",
+      `translate(${adjustedMargin.left}, ${adjustedMargin.top})`
+    );
+
+  // Adjust inner width to account for increased left margin
+  const adjustedInnerWidth = width - adjustedMargin.left - margin.right;
 
   // Add chart title
   g.append("text")
     .attr("class", "chart-title")
-    .attr("x", innerWidth / 2)
+    .attr("x", adjustedInnerWidth / 2)
     .attr("y", -20)
     .attr("text-anchor", "middle")
     .text("Income by Education Level and Gender");
 
-  // Y axis for education levels
+  // Draw horizontal bar chart with adjusted parameters
+  drawHorizontalEducationBars(sortedData, adjustedMargin, adjustedInnerWidth);
+}
+
+function drawHorizontalEducationBars(data, adjustedMargin, adjustedInnerWidth) {
+  const educations = data.map((d) => d.education);
+
+  // Y-axis scale with reduced padding
   const y = d3
     .scaleBand()
-    .domain(sortedData.map((d) => d.education))
+    .domain(educations)
     .range([0, innerHeight])
-    .padding(0.2);
+    .padding(0.1); // Reduced from 0.2 to 0.1 for tighter spacing
 
-  g.append("g").call(d3.axisLeft(y));
+  // Y-axis with full education labels
+  const yAxis = g.append("g").call(d3.axisLeft(y));
 
-  // X axis for income
+  // Ensure full education names are visible
+  yAxis
+    .selectAll("text")
+    .style("text-anchor", "end")
+    .attr("dx", "-10px")
+    .style("font-size", "10px")
+    .call(wrap, adjustedMargin.left - 20); // Custom text wrapping
+
+  // X-axis scale
+  const maxWage = d3.max(data, (d) => Math.max(d.menWage, d.womenWage));
   const x = d3
     .scaleLinear()
-    .domain([
-      0,
-      d3.max(sortedData, (d) => Math.max(d.menWage, d.womenWage)) * 1.1,
-    ])
-    .range([0, innerWidth]);
+    .domain([0, maxWage * 1.2]) // Extra padding to prevent clipping
+    .range([0, adjustedInnerWidth - 50]); // Space for labels
 
   g.append("g")
     .attr("transform", `translate(0, ${innerHeight})`)
     .call(d3.axisBottom(x).tickFormat((d) => `$${d / 1000}k`));
 
-  // Add axis labels
+  // X-axis label
   g.append("text")
-    .attr("x", innerWidth / 2)
+    .attr("x", adjustedInnerWidth / 2 - 50)
     .attr("y", innerHeight + 40)
     .attr("text-anchor", "middle")
     .text("Income ($)");
 
-  // Men's bars with animation
+  // Men's bars (blue)
   g.selectAll(".men-bar")
-    .data(sortedData)
+    .data(data)
     .enter()
     .append("rect")
     .attr("class", "men-bar")
     .attr("y", (d) => y(d.education))
     .attr("x", 0)
-    .attr("height", y.bandwidth() / 2)
+    .attr("height", y.bandwidth() / 2 - 2) // Slightly reduced height with a small gap
     .attr("width", 0)
     .attr("fill", "#2563EB")
     .transition()
     .duration(800)
     .attr("width", (d) => x(d.menWage));
 
-  // Women's bars with animation
+  // Women's bars (orange)
   g.selectAll(".women-bar")
-    .data(sortedData)
+    .data(data)
     .enter()
     .append("rect")
     .attr("class", "women-bar")
-    .attr("y", (d) => y(d.education) + y.bandwidth() / 2)
+    .attr("y", (d) => y(d.education) + y.bandwidth() / 2 + 2) // Added small gap
     .attr("x", 0)
-    .attr("height", y.bandwidth() / 2)
+    .attr("height", y.bandwidth() / 2 - 2) // Slightly reduced height with a small gap
     .attr("width", 0)
-    .attr("fill", "#DB2777")
+    .attr("fill", "#F97316")
     .transition()
     .duration(800)
     .attr("width", (d) => x(d.womenWage));
 
-  // Add income labels after animation
+  // Wage labels
   setTimeout(() => {
-    // Men's income labels
     g.selectAll(".men-wage-label")
-      .data(sortedData)
+      .data(data)
       .enter()
       .append("text")
       .attr("class", "men-wage-label")
-      .attr("x", (d) => x(d.menWage) + 5)
+      .attr("x", (d) => {
+        const barWidth = x(d.menWage);
+        return barWidth > adjustedInnerWidth - 100
+          ? barWidth - 40
+          : barWidth + 5;
+      })
       .attr("y", (d) => y(d.education) + y.bandwidth() / 4)
       .attr("dominant-baseline", "middle")
       .attr("font-size", "11px")
+      .attr("fill", (d) =>
+        x(d.menWage) > adjustedInnerWidth - 100 ? "white" : "black"
+      )
+      .attr("text-anchor", (d) =>
+        x(d.menWage) > adjustedInnerWidth - 100 ? "end" : "start"
+      )
       .text((d) => `$${Math.round(d.menWage / 1000)}k`);
 
-    // Women's income labels
     g.selectAll(".women-wage-label")
-      .data(sortedData)
+      .data(data)
       .enter()
       .append("text")
       .attr("class", "women-wage-label")
-      .attr("x", (d) => x(d.womenWage) + 5)
+      .attr("x", (d) => {
+        const barWidth = x(d.womenWage);
+        return barWidth > adjustedInnerWidth - 100
+          ? barWidth - 40
+          : barWidth + 5;
+      })
       .attr("y", (d) => y(d.education) + (y.bandwidth() * 3) / 4)
       .attr("dominant-baseline", "middle")
       .attr("font-size", "11px")
+      .attr("fill", (d) =>
+        x(d.womenWage) > adjustedInnerWidth - 100 ? "white" : "black"
+      )
+      .attr("text-anchor", (d) =>
+        x(d.womenWage) > adjustedInnerWidth - 100 ? "end" : "start"
+      )
       .text((d) => `$${Math.round(d.womenWage / 1000)}k`);
   }, 1000);
 
-  // Add legend
+  // Legend
   const legend = g
     .append("g")
-    .attr("transform", `translate(${innerWidth - 180}, 10)`);
+    .attr("transform", `translate(${adjustedInnerWidth - 140}, 10)`);
 
-  // Background for legend
   legend
     .append("rect")
     .attr("x", -10)
@@ -2352,7 +2124,6 @@ function drawEducationLevels(educationData) {
     .attr("opacity", 0.8)
     .attr("rx", 5);
 
-  // Male legend
   legend
     .append("rect")
     .attr("x", 0)
@@ -2360,17 +2131,14 @@ function drawEducationLevels(educationData) {
     .attr("width", 15)
     .attr("height", 15)
     .attr("fill", "#2563EB");
-
   legend.append("text").attr("x", 20).attr("y", 12).text("Male Income");
 
-  // Female legend
   legend
     .append("rect")
     .attr("x", 0)
     .attr("y", 25)
     .attr("width", 15)
     .attr("height", 15)
-    .attr("fill", "#DB2777");
-
+    .attr("fill", "#F97316");
   legend.append("text").attr("x", 20).attr("y", 37).text("Female Income");
 }
