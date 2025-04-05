@@ -1,3 +1,27 @@
+/* Tooltip Styles */
+#tooltip {
+  position: absolute; /* Needed for positioning near cursor */
+  visibility: hidden; /* Start hidden */
+  opacity: 0; /* Start transparent for fade effect */
+  background-color: rgba(0, 0, 0, 0.8); /* Slightly darker, adjust as needed */
+  color: white;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 13px; /* Slightly larger */
+  font-family: sans-serif; /* Use a common sans-serif font */
+  pointer-events: none; /* Critical: prevents tooltip from blocking hover events on elements underneath */
+  white-space: nowrap;
+  z-index: 10; /* Ensure it's above SVG elements */
+  transition: opacity 0.2s ease-out, visibility 0s linear 0.2s; /* Fade out, immediate visibility change */
+}
+
+#tooltip.visible {
+  visibility: visible; /* Make it visible */
+  opacity: 1; /* Make it opaque */
+  transition: opacity 0.2s ease-out; /* Fade in */
+}
+/* End tooltip styles */
+
 /* Global Styles */
 * {
   box-sizing: border-box;
@@ -60,6 +84,7 @@ header {
   display: flex;
   justify-content: center;
   align-items: center;
+  position: relative; /* Needed for absolute positioning of tooltip if it were inside */
 }
 
 /* Footer Styling */
@@ -95,14 +120,14 @@ footer {
 
 /* Text Styling */
 .verse {
-  font-size: 1.2em; /* Reduced font size to fit on a single line */
+  font-size: 1.2em;
   list-style-type: none;
   padding: 0px;
   font-weight: 300;
   color: #666;
   margin: 2em 0;
   transition: all 0.5s ease;
-  max-width: 90%; /* Prevents overflow */
+  max-width: 90%;
   text-overflow: ellipsis;
   white-space: normal;
 }
@@ -114,6 +139,7 @@ svg {
   width: 90%;
   height: 80%;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  display: block; /* Helps prevent extra space below SVG */
 }
 
 /* Active Verse and Line Styling */
@@ -142,7 +168,11 @@ svg {
 
 /* Bar Styles */
 .bar {
-  transition: opacity 0.3s;
+  transition: opacity 0.3s ease; /* Smooth transition */
+}
+
+.bar:hover { /* Optional: subtle hover effect on bars */
+    opacity: 0.8;
 }
 
 .men-bar {
@@ -152,6 +182,21 @@ svg {
 .women-bar {
   fill: #DB2777;
 }
+
+/* Stacked Bar Hover */
+.men-stack rect:hover, .women-stack rect:hover {
+    opacity: 0.8;
+}
+
+
+/* Box Plot Hover */
+.box-group:hover .box {
+    opacity: 0.4; /* Example: change opacity */
+}
+.box-group:hover .median-line {
+    stroke-width: 3.5px; /* Example: thicken median */
+}
+
 
 text {
   fill: #333;
