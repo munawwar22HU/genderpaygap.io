@@ -1,62 +1,23 @@
 function drawOccupationHorizontalBarChart(occupationData) {
   clearChartArea();
   currentChartType = "bar";
-
   const sortedData = [...occupationData].sort((a, b) => b.menWage - a.menWage);
-
-  // Adjust margins and width
-  const adjustedMargin = { ...margin, left: margin.left + 100 };
-  const adjustedInnerWidth = width - adjustedMargin.left - margin.right;
-
-  // Create the container group
-  g = svg
-    .append("g")
-    .attr(
-      "transform",
-      `translate(${adjustedMargin.left}, ${adjustedMargin.top})`
-    );
-
-  // Add chart title
-  g.append("text")
-    .attr("class", "chart-title")
-    .attr("x", adjustedInnerWidth / 2)
-    .attr("y", -20)
-    .attr("text-anchor", "middle")
-    .text("Income by Occupation and Gender");
-
-  // Draw horizontal bar chart
+  const adjustedMargin = { ...margin, left: margin.left + 100 }; // Assuming margin is global
+  const adjustedInnerWidth = width - adjustedMargin.left - margin.right; // Assuming width is global
+  g = svg.append("g").attr("transform", `translate(${adjustedMargin.left}, ${adjustedMargin.top})`);
+  g.append("text").attr("class", "chart-title").attr("x", adjustedInnerWidth / 2).attr("y", -20).attr("text-anchor", "middle").text("Income by Occupation and Gender");
   drawHorizontalBars(sortedData, adjustedMargin, adjustedInnerWidth, 'occupation');
 }
 
 function drawEducationHorizontalBarChart(educationData) {
   clearChartArea();
   currentChartType = "bar";
-
-  // Order and sort data
   const educationOrder = [ "None", "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6", "Grade 7", "Grade 8", "Grade 9", "Grade 10", "Grade 11", "Grade 12", "Some College", "Associate", "Bachelors", "Advanced Degree", ];
   const sortedData = [...educationData].sort( (a, b) => educationOrder.indexOf(a.education) - educationOrder.indexOf(b.education) );
-
-  // Adjust margins and width
-  const adjustedMargin = { ...margin, left: margin.left + 100 };
-  const adjustedInnerWidth = width - adjustedMargin.left - margin.right;
-
-  // Create the container group
-  g = svg
-    .append("g")
-    .attr(
-      "transform",
-      `translate(${adjustedMargin.left}, ${adjustedMargin.top})`
-    );
-
-  // Add chart title
-  g.append("text")
-    .attr("class", "chart-title")
-    .attr("x", adjustedInnerWidth / 2)
-    .attr("y", -20)
-    .attr("text-anchor", "middle")
-    .text("Income by Education Level and Gender");
-
-  // Draw horizontal bar chart
+  const adjustedMargin = { ...margin, left: margin.left + 100 }; // Assuming margin is global
+  const adjustedInnerWidth = width - adjustedMargin.left - margin.right; // Assuming width is global
+  g = svg.append("g").attr("transform", `translate(${adjustedMargin.left}, ${adjustedMargin.top})`);
+  g.append("text").attr("class", "chart-title").attr("x", adjustedInnerWidth / 2).attr("y", -20).attr("text-anchor", "middle").text("Income by Education Level and Gender");
   drawHorizontalBars(sortedData, adjustedMargin, adjustedInnerWidth, 'education');
 }
 
@@ -65,16 +26,17 @@ function drawEducationHorizontalBarChart(educationData) {
 function drawHorizontalBars(data, adjustedMargin, adjustedInnerWidth, dataType) {
   // Select Tooltip
   const tooltip = d3.select("#tooltip");
+  if (tooltip.empty()) { console.error("Tooltip element #tooltip not found."); return; }
 
   const categoryKey = dataType === 'occupation' ? 'occupation' : 'education';
   const categories = data.map((d) => d[categoryKey]);
 
-  // Y-axis scale
+  // Y-axis scale (assuming innerHeight is available)
   const y = d3.scaleBand().domain(categories).range([0, innerHeight]).padding(0.1);
 
   // Y-axis draw and wrap
   const yAxis = g.append("g").call(d3.axisLeft(y));
-  yAxis.selectAll("text").style("text-anchor", "end").attr("dx", "-10px").style("font-size", "10px").call(wrap, adjustedMargin.left - 20);
+  yAxis.selectAll("text").style("text-anchor", "end").attr("dx", "-10px").style("font-size", "10px").call(wrap, adjustedMargin.left - 20); // Use wrap function
 
   // X-axis scale
   const maxWage = d3.max(data, (d) => Math.max(d.menWage, d.womenWage));
@@ -87,65 +49,57 @@ function drawHorizontalBars(data, adjustedMargin, adjustedInnerWidth, dataType) 
   g.append("text").attr("x", adjustedInnerWidth / 2 - 50).attr("y", innerHeight + 40).attr("text-anchor", "middle").text("Income ($)");
 
   // --- Tooltip Event Handlers ---
-  const mouseover = function(event, d) {
+  const mousemove = function(event, d) { // Generic mousemove
+     const tooltipNode = tooltip.node(); if (!tooltipNode) return;
+     const tooltipWidth = tooltipNode.offsetWidth; const tooltipHeight = tooltipNode.offsetHeight;
+     const pageX = event.pageX; const pageY = event.pageY;
+     const viewportWidth = window.innerWidth; const viewportHeight = window.innerHeight;
+     const scrollY = window.scrollY;
+     let xPosition = pageX + 15; let yPosition = pageY - 10;
+     if (xPosition + tooltipWidth > viewportWidth) { xPosition = pageX - tooltipWidth - 15; }
+     if (yPosition < scrollY) { yPosition = scrollY + 5; }
+     else if (yPosition + tooltipHeight > scrollY + viewportHeight) { yPosition = scrollY + viewportHeight - tooltipHeight - 5; }
+     tooltip.style("left", xPosition + "px").style("top", yPosition + "px");
+  };
+
+  const mouseout = function(event, d) { // Generic mouseout
+    tooltip.classed('visible', false);
+  };
+
+  // Specific mouseover for Men
+  const mouseoverMen = function(event, d) {
     tooltip
       .html(
         `<strong>${dataType === 'occupation' ? 'Occupation' : 'Education'}:</strong> ${d[categoryKey]}<br/>` +
-        `<strong>Men's Wage:</strong> $${d.menWage.toLocaleString()}<br/>` +
-        `<strong>Women's Wage:</strong> $${d.womenWage.toLocaleString()}<br/>` +
-        `<strong>Gap:</strong> ${d.gapPercentage}%`
+        `<strong>Men's Wage:</strong> $${d.menWage.toLocaleString()}`
       )
       .classed('visible', true);
-    //d3.select(this).style("opacity", 0.7); // Use CSS :hover
   };
 
-  const mousemove = function(event, d) {
+   // Specific mouseover for Women
+   const mouseoverWomen = function(event, d) {
     tooltip
-      .style("left", (event.pageX + 15) + "px")
-      .style("top", (event.pageY - 10) + "px");
-  };
-
-  const mouseout = function(event, d) {
-    tooltip.classed('visible', false);
-    //d3.select(this).style("opacity", 1); // Use CSS :hover
+      .html(
+        `<strong>${dataType === 'occupation' ? 'Occupation' : 'Education'}:</strong> ${d[categoryKey]}<br/>` +
+        `<strong>Women's Wage:</strong> $${d.womenWage.toLocaleString()}`
+      )
+      .classed('visible', true);
   };
   // --- End Tooltip Handlers ---
 
   // Men's bars
-  g.selectAll(".men-bar")
-    .data(data)
-    .join("rect") // Use .join()
-    .attr("class", "bar men-bar") // Add "bar" class
-    .attr("y", (d) => y(d[categoryKey]))
-    .attr("x", 0)
-    .attr("height", y.bandwidth() / 2 - 2)
-    .attr("width", 0) // Start for animation
-    .attr("fill", "#2563EB")
-    .style("cursor", "pointer")
-    .on("mouseover", mouseover)
+  g.selectAll(".men-bar").data(data).join("rect").attr("class", "bar men-bar").attr("y", (d) => y(d[categoryKey])).attr("x", 0).attr("height", y.bandwidth() / 2 - 2).attr("width", 0).attr("fill", "#2563EB").style("cursor", "pointer")
+    .on("mouseover", mouseoverMen) // Attach specific handler
     .on("mousemove", mousemove)
     .on("mouseout", mouseout)
-    .transition()
-    .duration(800)
-    .attr("width", (d) => x(d.menWage));
+    .transition().duration(800).attr("width", (d) => x(d.menWage));
 
   // Women's bars
-  g.selectAll(".women-bar")
-    .data(data)
-    .join("rect") // Use .join()
-    .attr("class", "bar women-bar") // Add "bar" class
-    .attr("y", (d) => y(d[categoryKey]) + y.bandwidth() / 2 + 2)
-    .attr("x", 0)
-    .attr("height", y.bandwidth() / 2 - 2)
-    .attr("width", 0) // Start for animation
-    .attr("fill", "#DB2777") // Pink color
-    .style("cursor", "pointer")
-    .on("mouseover", mouseover)
+  g.selectAll(".women-bar").data(data).join("rect").attr("class", "bar women-bar").attr("y", (d) => y(d[categoryKey]) + y.bandwidth() / 2 + 2).attr("x", 0).attr("height", y.bandwidth() / 2 - 2).attr("width", 0).attr("fill", "#DB2777").style("cursor", "pointer")
+    .on("mouseover", mouseoverWomen) // Attach specific handler
     .on("mousemove", mousemove)
     .on("mouseout", mouseout)
-    .transition()
-    .duration(800)
-    .attr("width", (d) => x(d.womenWage));
+    .transition().duration(800).attr("width", (d) => x(d.womenWage));
 
   // Wage labels (keep setTimeout)
   setTimeout(() => {
@@ -154,7 +108,7 @@ function drawHorizontalBars(data, adjustedMargin, adjustedInnerWidth, dataType) 
   }, 1000);
 
 
-  // Legend
+  // Legend (assuming innerHeight, margin available)
   const legend = svg.append("g").attr("transform", `translate(${adjustedMargin.left + adjustedInnerWidth / 4}, ${innerHeight + margin.bottom + 10})`);
   legend.append("circle").attr("cx", 0).attr("cy", 10).attr("r", 6).attr("fill", "#2563EB");
   legend.append("text").attr("x", 15).attr("y", 15).text("Men's Wage");
@@ -162,27 +116,18 @@ function drawHorizontalBars(data, adjustedMargin, adjustedInnerWidth, dataType) 
   legend.append("text").attr("x", 135).attr("y", 15).text("Women's Wage");
 }
 
-// Text wrapping function
+// Text wrapping function (ensure it's present)
 function wrap(text, width) {
   text.each(function () {
-    const text = d3.select(this);
-    const words = text.text().split(/\s+/).reverse();
-    let word;
-    let line = [];
-    let lineNumber = 0;
-    const lineHeight = 1.1; // ems
-    const y = text.attr("y");
-    const dy = parseFloat(text.attr("dy") || 0);
-    let tspan = text.text(null).append("tspan").attr("x", -10).attr("y", y).attr("dy", dy + "em"); // Use existing x/y/dy
-
+    const text = d3.select(this); const words = text.text().split(/\s+/).reverse();
+    let word; let line = []; let lineNumber = 0; const lineHeight = 1.1; // ems
+    const y = text.attr("y"); const dy = parseFloat(text.attr("dy") || 0);
+    let tspan = text.text(null).append("tspan").attr("x", -10).attr("y", y).attr("dy", dy + "em");
     while ((word = words.pop())) {
-      line.push(word);
-      tspan.text(line.join(" "));
+      line.push(word); tspan.text(line.join(" "));
       if (tspan.node().getComputedTextLength() > width && line.length > 1) {
-        line.pop();
-        tspan.text(line.join(" "));
-        line = [word];
-        tspan = text.append("tspan").attr("x", -10).attr("y", y).attr("dy", ++lineNumber * lineHeight + dy + "em").text(word); // Increment dy for new line
+        line.pop(); tspan.text(line.join(" ")); line = [word];
+        tspan = text.append("tspan").attr("x", -10).attr("y", y).attr("dy", ++lineNumber * lineHeight + dy + "em").text(word);
       }
     }
   });
