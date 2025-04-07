@@ -10,7 +10,6 @@ function drawLineChart(yearlyData) {
     return; // Exit if tooltip doesn't exist
   }
 
-
   // Create the container group
   // Assuming 'svg', 'margin', 'innerWidth', 'innerHeight' are defined globally or passed correctly
   g = svg
@@ -76,90 +75,81 @@ function drawLineChart(yearlyData) {
   gapPath.attr("stroke-dasharray", `5,5,${gapPathLength}`).attr("stroke-dashoffset", gapPathLength).transition().duration(1500).attr("stroke-dashoffset", 0);
 
   // --- Tooltip Event Handlers ---
-  const mouseover = function(event, d) {
-    tooltip
-      .html( // Set content FIRST
-        `<strong>Year:</strong> ${d.year}<br/>` +
-        `<strong>Men's Wage:</strong> $${d.menWage.toLocaleString()}<br/>` +
-        `<strong>Women's Wage:</strong> $${d.womenWage.toLocaleString()}<br/>` +
-        `<strong>Gap:</strong> ${d.gapPercentage}%`
-      )
-      .classed('visible', true); // Make visible
-      // Position will be set in mousemove
-  };
 
-  const mousemove = function(event, d) {
-    const tooltipNode = tooltip.node();
-    if (!tooltipNode) return;
+  // Generic mousemove and mouseout
+   const mousemove = function(event, d) {
+     const tooltipNode = tooltip.node();
+     if (!tooltipNode) return;
+     const tooltipWidth = tooltipNode.offsetWidth;
+     const tooltipHeight = tooltipNode.offsetHeight;
+     const pageX = event.pageX;
+     const pageY = event.pageY;
+     const viewportWidth = window.innerWidth;
+     const viewportHeight = window.innerHeight;
+     const scrollY = window.scrollY;
+     let xPosition = pageX + 15;
+     let yPosition = pageY - 10;
+     if (xPosition + tooltipWidth > viewportWidth) { xPosition = pageX - tooltipWidth - 15; }
+     if (yPosition < scrollY) { yPosition = scrollY + 5; }
+     else if (yPosition + tooltipHeight > scrollY + viewportHeight) { yPosition = scrollY + viewportHeight - tooltipHeight - 5; }
+     tooltip.style("left", xPosition + "px").style("top", yPosition + "px");
+   };
 
-    const tooltipWidth = tooltipNode.offsetWidth;
-    const tooltipHeight = tooltipNode.offsetHeight; // Get height too for vertical check if needed
-    const pageX = event.pageX;
-    const pageY = event.pageY;
-    const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight; // Get viewport height
-    const scrollY = window.scrollY; // Get vertical scroll position
+   const mouseout = function(event, d) {
+     tooltip.classed('visible', false);
+   };
 
-    let xPosition = pageX + 15; // Default position right of cursor
-    let yPosition = pageY - 10; // Default position above cursor
+   // Specific mouseover for Men
+   const mouseoverMen = function(event, d) {
+       tooltip
+         .html(
+             `<strong>Year:</strong> ${d.year}<br/>` +
+             `<strong>Men's Wage:</strong> $${d.menWage.toLocaleString()}`
+         )
+         .classed('visible', true);
+   };
 
-    // Check horizontal bounds
-    if (xPosition + tooltipWidth > viewportWidth) {
-      xPosition = pageX - tooltipWidth - 15; // Position left of cursor
-    }
-
-    // Check vertical bounds (prevent going off top/bottom)
-     if (yPosition < scrollY) { // Check if tooltip goes above viewport top (considering scroll)
-        yPosition = scrollY + 5; // Position slightly below viewport top
-     } else if (yPosition + tooltipHeight > scrollY + viewportHeight) {
-        yPosition = scrollY + viewportHeight - tooltipHeight - 5; // Position slightly above viewport bottom
-     }
-
-
-    tooltip.style("left", xPosition + "px")
-           .style("top", yPosition + "px");
-  };
-
-  const mouseout = function(event, d) {
-    tooltip.classed('visible', false); // Hide tooltip by removing class
-  };
+   // Specific mouseover for Women
+    const mouseoverWomen = function(event, d) {
+       tooltip
+         .html(
+             `<strong>Year:</strong> ${d.year}<br/>` +
+             `<strong>Women's Wage:</strong> $${d.womenWage.toLocaleString()}`
+         )
+         .classed('visible', true);
+   };
   // --- End Tooltip Handlers ---
 
   // Add circles for men's wage data points with tooltip events
   g.selectAll(".men-dot")
     .data(yearlyData)
-    .join("circle") // Use .join() for robustness
+    .join("circle")
     .attr("class", "men-dot")
     .attr("cx", (d) => xScale(d.year))
     .attr("cy", (d) => yScale(d.menWage))
     .attr("r", 5)
     .attr("fill", "#2563EB")
     .style("cursor", "pointer")
-    .on("mouseover", mouseover) // Attach handlers
-    .on("mousemove", mousemove)
-    .on("mouseout", mouseout);
+    .on("mouseover", mouseoverMen) // Use specific handler
+    .on("mousemove", mousemove)    // Use generic handler
+    .on("mouseout", mouseout);     // Use generic handler
 
   // Add circles for women's wage data points with tooltip events
   g.selectAll(".women-dot")
     .data(yearlyData)
-    .join("circle") // Use .join()
+    .join("circle")
     .attr("class", "women-dot")
     .attr("cx", (d) => xScale(d.year))
     .attr("cy", (d) => yScale(d.womenWage))
     .attr("r", 5)
     .attr("fill", "#DB2777")
     .style("cursor", "pointer")
-    .on("mouseover", mouseover) // Attach handlers
-    .on("mousemove", mousemove)
-    .on("mouseout", mouseout);
+    .on("mouseover", mouseoverWomen) // Use specific handler
+    .on("mousemove", mousemove)     // Use generic handler
+    .on("mouseout", mouseout);      // Use generic handler
 
   // Legend (unchanged)
-  const legend = svg.append("g").attr(
-    "transform",
-    `translate(${margin.left + innerWidth / 4}, ${
-      innerHeight + margin.bottom + 10
-    })`
-  );
+  const legend = svg.append("g").attr("transform", `translate(${margin.left + innerWidth / 4}, ${innerHeight + margin.bottom + 10})`);
   legend.append("circle").attr("cx", 0).attr("cy", 10).attr("r", 6).attr("fill", "#2563EB");
   legend.append("text").attr("x", 15).attr("y", 15).text("Men's Wage");
   legend.append("circle").attr("cx", 120).attr("cy", 10).attr("r", 6).attr("fill", "#DB2777");
