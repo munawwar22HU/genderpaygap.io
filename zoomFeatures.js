@@ -144,6 +144,39 @@ function applyTimeZoom() {
   d3.select("#reset-zoom").style("display", "inline-block");
 }
 
+// Get ordered categories for different chart types
+function getOrderedCategories(dataSource) {
+  // Define proper education order (from lowest to highest)
+  const educationOrder = [
+    "None", 
+    "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", 
+    "Grade 6", "Grade 7", "Grade 8", "Grade 9", "Grade 10", 
+    "Grade 11", "Grade 12", 
+    "Some College", "Associate", "Bachelors", "Advanced Degree"
+  ];
+
+  // Check which type of data we're dealing with
+  if (dataSource[0] && dataSource[0].education) {
+    // For education data, return ordered categories
+    return educationOrder.filter(level => 
+      dataSource.some(d => d.education === level)
+    );
+  } else if (dataSource[0] && dataSource[0].occupation) {
+    // For occupation data, sort by the wage values to match visualization order
+    const sortedData = [...dataSource].sort((a, b) => b.menWage - a.menWage);
+    return sortedData.map(d => d.occupation);
+  } else if (dataSource[0] && dataSource[0].race) {
+    // For race data, sort by the wage values to match visualization order
+    const sortedData = [...dataSource].sort((a, b) => b.menWage - a.menWage);
+    return sortedData.map(d => d.race);
+  } else if (dataSource[0] && dataSource[0].ageGroup) {
+    // For age data, maintain natural order
+    return [...new Set(dataSource.map(d => d.ageGroup))];
+  }
+  
+  return [];
+}
+
 // Add demographic filter controls for bar charts
 function addFilterControls(container) {
   const filterControls = container.append("div")
@@ -160,18 +193,17 @@ function addFilterControls(container) {
   if (currentChartType === "bar") {
     // Determine which data we're currently using
     if (g.selectAll(".men-bar").data()[0]?.ageGroup) {
-      categories = ageData.map(d => d.ageGroup);
       dataSource = ageData;
     } else if (g.selectAll(".men-bar").data()[0]?.race) {
-      categories = raceData.map(d => d.race);
       dataSource = raceData;
     } else if (g.selectAll(".men-bar").data()[0]?.occupation) {
-      categories = occupationData.map(d => d.occupation);
       dataSource = occupationData;
     } else if (g.selectAll(".men-bar").data()[0]?.education) {
-      categories = educationData.map(d => d.education);
       dataSource = educationData;
     }
+    
+    // Get ordered categories based on the data source
+    categories = getOrderedCategories(dataSource);
   }
   
   // Only continue if we have categories
@@ -198,7 +230,7 @@ function addFilterControls(container) {
       .attr("for", "select-all")
       .text("Select All");
     
-    // Add individual category checkboxes
+    // Add individual category checkboxes in the correct order
     categories.forEach(category => {
       const div = checkboxContainer.append("div")
         .attr("class", "checkbox-item");
