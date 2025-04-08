@@ -1,3 +1,27 @@
+/* Tooltip Styles */
+#tooltip {
+  position: absolute; /* Needed for positioning near cursor */
+  visibility: hidden; /* Start hidden */
+  opacity: 0; /* Start transparent for fade effect */
+  background-color: rgba(0, 0, 0, 0.8); /* Slightly darker, adjust as needed */
+  color: white;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 13px; /* Slightly larger */
+  font-family: sans-serif; /* Use a common sans-serif font */
+  pointer-events: none; /* Critical: prevents tooltip from blocking hover events on elements underneath */
+  white-space: nowrap;
+  z-index: 10; /* Ensure it's above SVG elements */
+  transition: opacity 0.2s ease-out, visibility 0s linear 0.2s; /* Fade out, immediate visibility change */
+}
+
+#tooltip.visible {
+  visibility: visible; /* Make it visible */
+  opacity: 1; /* Make it opaque */
+  transition: opacity 0.2s ease-out; /* Fade in */
+}
+/* End tooltip styles */
+
 /* Global Styles */
 * {
   box-sizing: border-box;
@@ -13,7 +37,7 @@ p {
 
 /* Header Styling */
 header {
-  background-color: #4682B4; /* SteelBlue */
+  background-color: #4B5563; /* Changed from SteelBlue to slate gray */
   text-align: center;
   color: white;
   height: 100px;
@@ -32,7 +56,7 @@ header {
 /* Left Column Styling */
 .left-column {
   flex: 1;
-  background-color: #83C5E2; /* Light blue */
+  background-color: #E5E7EB; /* Changed from light blue to light gray */
   color: black;
   display: flex;
   align-items: center;
@@ -56,17 +80,18 @@ header {
 /* Right Column Styling */
 .right-column {
   flex: 2;
-  background-color: #E0E0E0; /* Light gray */
+  background-color: #F3F4F6; /* Lighter gray */
   display: flex;
   justify-content: center;
   align-items: center;
+  position: relative; /* Needed for absolute positioning of tooltip if it were inside */
 }
 
 /* Footer Styling */
 footer {
   position: fixed;
   bottom: 0;
-  background-color: #4682B4; /* SteelBlue */
+  background-color: #4B5563; /* Matched with header */
   display: flex;
   justify-content: center;
   align-items: center;
@@ -83,7 +108,7 @@ footer {
   border: none;
   border-radius: 5px;
   background-color: white;
-  color: #4682B4;
+  color: #4B5563;
   cursor: pointer;
   transition: all 0.3s;
 }
@@ -95,14 +120,14 @@ footer {
 
 /* Text Styling */
 .verse {
-  font-size: 1.2em; /* Reduced font size to fit on a single line */
+  font-size: 1.2em;
   list-style-type: none;
   padding: 0px;
   font-weight: 300;
   color: #666;
   margin: 2em 0;
   transition: all 0.5s ease;
-  max-width: 90%; /* Prevents overflow */
+  max-width: 90%;
   text-overflow: ellipsis;
   white-space: normal;
 }
@@ -114,6 +139,7 @@ svg {
   width: 90%;
   height: 80%;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  display: block; /* Helps prevent extra space below SVG */
 }
 
 /* Active Verse and Line Styling */
@@ -124,7 +150,7 @@ svg {
 }
 
 .active-line {
-  color: #2563EB; /* Blue */
+  color: #6366F1; /* Updated to match new primary color */
   font-weight: 600;
 }
 
@@ -142,17 +168,63 @@ svg {
 
 /* Bar Styles */
 .bar {
-  transition: opacity 0.3s;
+  transition: opacity 0.3s ease; /* Smooth transition */
 }
 
-.men-bar {
-  fill: #2563EB;
+.bar:hover { /* Optional: subtle hover effect on bars */
+    opacity: 0.8;
 }
 
-.women-bar {
-  fill: #DB2777;
+/* New gender-neutral colors */
+.men-bar, .men-line, .men-dot {
+  fill: #6366F1; /* Indigo */
+  stroke: #6366F1;
 }
 
+.women-bar, .women-line, .women-dot {
+  fill: #10B981; /* Emerald */
+  stroke: #10B981;
+}
+
+/* Stacked bar specific */
+.men-stack rect {
+  fill: #6366F1; /* Indigo */
+}
+
+.women-stack rect {
+  fill: #10B981; /* Emerald */
+}
+
+/* Stacked Bar Hover */
+.men-stack rect:hover, .women-stack rect:hover {
+    opacity: 0.8;
+}
+
+/* Gap color */
+.gap-line {
+  stroke: #F59E0B; /* Amber */
+  stroke-width: 2;
+  stroke-dasharray: 5,5;
+  fill: none;
+}
+
+.gap-point {
+  fill: #F59E0B; /* Amber */
+}
+
+/* Box Plot Styles */
+.box {
+  opacity: 0.2;
+}
+
+.box-group:hover .box {
+  opacity: 0.4; /* Example: change opacity */
+}
+.box-group:hover .median-line {
+  stroke-width: 3.5px; /* Example: thicken median */
+}
+
+/* Text styles */
 text {
   fill: #333;
   font-size: 12px;
@@ -166,17 +238,6 @@ text {
 .chart-title {
   font-size: 18px;
   font-weight: bold;
-}
-
-.gap-line {
-  stroke: #047857;
-  stroke-width: 2;
-  stroke-dasharray: 5,5;
-  fill: none;
-}
-
-.gap-point {
-  fill: #047857;
 }
 
 /* Legend Styling */

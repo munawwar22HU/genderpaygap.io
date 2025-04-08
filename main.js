@@ -2,6 +2,15 @@ let svg = d3.select("#svg");
 let width = parseInt(svg.style("width")) || 800;
 let height = parseInt(svg.style("height")) || 500;
 
+// Global color constants for consistent color scheme
+const CHART_COLORS = {
+  PRIMARY_1: "#6366F1", // Indigo for one gender (replaces blue)
+  PRIMARY_2: "#10B981", // Emerald green for other gender (replaces pink)
+  ACCENT: "#F59E0B",    // Amber for accent/gap visualization
+  BG_LIGHT: "#F5F5F5",  // Light background
+  TEXT_DARK: "#333333", // Dark text
+};
+
 // Adjusted margins to allow space for the legend
 let margin = { top: 50, right: 80, bottom: 100, left: 80 }; // Increased bottom margin
 let innerWidth = width - margin.left - margin.right;
@@ -90,8 +99,6 @@ function OccupationByGender() {
 function WagesByHours() {
   drawHoursBoxPlot(hoursData);
 }
-
-
 
 // Initialize SVG
 function initializeSVG() {
