@@ -125,8 +125,8 @@ function drawOccupationStackedBarChart(occupationProportionData) {
 
   // X-axis label for clarity
   g.append("text")
-    .attr("x", adjustedInnerWidth / 2)
-    .attr("y", adjustedInnerHeight + 60)
+    .attr("x", adjustedInnerWidth / 2 )
+    .attr("y", adjustedInnerHeight + 110)
     .attr("text-anchor", "middle")
     .text("Occupation Types");
 
@@ -145,31 +145,30 @@ function drawOccupationStackedBarChart(occupationProportionData) {
        chartHeight - bottomMargin + 10 // Position below chart
     })`
   );
-  
-  // First legend item
-  legend.append("rect")
-    .attr("x", 0)
-    .attr("y", 0)
-    .attr("width", 12)
-    .attr("height", 12)
-    .attr("fill", colors.men);
+
+  // Men's legend item
+  legend.append("circle")
+    .attr("cx", 0)
+    .attr("cy", 20)
+    .attr("r", 6)
+    .attr("fill", CHART_COLORS.PRIMARY_1);
   legend.append("text")
-    .attr("x", 18)
-    .attr("y", 10)
+    .attr("x", 15)
+    .attr("y", 25)
     .text("Men (% of Workforce)");
   
-  // Second legend item
-  legend.append("rect")
-    .attr("x", 170)
-    .attr("y", 0)
-    .attr("width", 12)
-    .attr("height", 12)
-    .attr("fill", colors.women);
+  // Women's legend item
+  legend.append("circle")
+    .attr("cx", 145)
+    .attr("cy", 20)
+    .attr("r", 6)
+    .attr("fill", CHART_COLORS.PRIMARY_2);
   legend.append("text")
-    .attr("x", 188)
-    .attr("y", 10)
+    .attr("x", 160)
+    .attr("y", 25)
     .text("Women (% of Workforce)");
-
+  
+  
   // Chart title
   g.append("text")
     .attr("x", adjustedInnerWidth / 2)
