@@ -12,6 +12,45 @@
   font-size: 14px;
 }
 
+/* New zoom controls header */
+.zoom-controls-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.zoom-title {
+  margin: 0;
+  font-size: 16px;
+  color: #4B5563;
+}
+
+.minimize-btn {
+  background: none;
+  border: 1px solid #E5E7EB;
+  border-radius: 4px;
+  font-size: 16px;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.minimize-btn:hover {
+  background-color: #F3F4F6;
+}
+
+/* Content container */
+.zoom-controls-content {
+  transition: height 0.3s ease;
+}
+
+/* Original styling */
 .zoom-controls h3 {
   margin-top: 0;
   margin-bottom: 10px;
@@ -93,4 +132,9 @@
 /* Make the right column relative for absolute positioning of zoom controls */
 .right-column {
   position: relative;
+}
+
+/* When minimized, make the zoom controls take up less space */
+.zoom-controls.minimized {
+  padding-bottom: 8px;
 }
