@@ -48,7 +48,7 @@ function drawOccupationStackedBarChart(occupationData) {
   g.append("g").call(d3.axisLeft(yScale).tickFormat((d) => `${d}%`));
 
   // Define colors
-  const colors = { men: "#2563EB", women: "#DB2777" };
+  const colors = { men: "#5A67D8", women: "#F6AD55" };
 
   // Data transformation for stacking
   const stackKeys = ["menPercentage", "womenPercentage"]; // Keys in your data objects
@@ -105,19 +105,13 @@ function drawOccupationStackedBarChart(occupationData) {
       .on("mouseout", mouseout);
 
 
-  // Legend (using rects)
-  const legend = svg.append("g").attr(
-    "transform",
-    `translate(${marginLeft + adjustedInnerWidth / 4}, ${
-       chartHeight - bottomMargin + 10 // Position below chart
-    })`
-  );
-  legend.append("rect").attr("x", 0).attr("y", 0).attr("width", 12).attr("height", 12).attr("fill", colors.men);
-  legend.append("text").attr("x", 18).attr("y", 10).text("Men (%)");
-  legend.append("rect").attr("x", 120).attr("y", 0).attr("width", 12).attr("height", 12).attr("fill", colors.women);
-  legend.append("text").attr("x", 138).attr("y", 10).text("Women (%)");
-
-
+ 
+  const legend = svg.append("g").attr("transform", `translate(${margin.left + innerWidth / 4}, ${innerHeight + margin.bottom + 10})`);
+  legend.append("circle").attr("cx", 0).attr("cy", 10).attr("r", 6).attr("fill", "#5A67D8");
+  legend.append("text").attr("x", 15).attr("y", 15).text("Percentage of Men");
+  legend.append("circle").attr("cx", 130).attr("cy", 10).attr("r", 6).attr("fill", "#F6AD55");
+  legend.append("text").attr("x", 145).attr("y", 15).text("Percentage of Women");
+ 
   // Chart title
   g.append("text")
     .attr("x", adjustedInnerWidth / 2)

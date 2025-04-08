@@ -1,26 +1,25 @@
 /* Tooltip Styles */
 #tooltip {
-  position: absolute; /* Needed for positioning near cursor */
-  visibility: hidden; /* Start hidden */
-  opacity: 0; /* Start transparent for fade effect */
-  background-color: rgba(0, 0, 0, 0.8); /* Slightly darker, adjust as needed */
+  position: absolute;
+  visibility: hidden;
+  opacity: 0;
+  background-color: rgba(0, 0, 0, 0.8);
   color: white;
   padding: 8px 12px;
   border-radius: 4px;
-  font-size: 13px; /* Slightly larger */
-  font-family: sans-serif; /* Use a common sans-serif font */
-  pointer-events: none; /* Critical: prevents tooltip from blocking hover events on elements underneath */
+  font-size: 13px;
+  font-family: sans-serif;
+  pointer-events: none;
   white-space: nowrap;
-  z-index: 10; /* Ensure it's above SVG elements */
-  transition: opacity 0.2s ease-out, visibility 0s linear 0.2s; /* Fade out, immediate visibility change */
+  z-index: 10;
+  transition: opacity 0.2s ease-out, visibility 0s linear 0.2s;
 }
 
 #tooltip.visible {
-  visibility: visible; /* Make it visible */
-  opacity: 1; /* Make it opaque */
-  transition: opacity 0.2s ease-out; /* Fade in */
+  visibility: visible;
+  opacity: 1;
+  transition: opacity 0.2s ease-out;
 }
-/* End tooltip styles */
 
 /* Global Styles */
 * {
@@ -33,11 +32,12 @@ p {
   margin: 0;
   padding: 0;
   font-family: 'Arial', sans-serif;
+  
 }
 
 /* Header Styling */
 header {
-  background-color: #4682B4; /* SteelBlue */
+  background-color: #5C4D7D; /* Deep Purple */
   text-align: center;
   color: white;
   height: 100px;
@@ -56,23 +56,22 @@ header {
 /* Left Column Styling */
 .left-column {
   flex: 1;
-  background-color: #83C5E2; /* Light blue */
-  color: black;
+  background-color: #f1eef6; /* Lavender Mist - soft purple tone */
+  color: #374151; /* Charcoal Gray for readability */
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 40px; /* Increased padding */
+  padding: 40px;
 }
 
 .left-column-content {
   max-height: calc(100vh - 200px);
   overflow-y: auto;
   scrollbar-width: none;
-  padding-left: 20px; /* Added padding to prevent text cutoff */
-  text-align: left; /* Ensure proper alignment */
+  padding-left: 20px;
+  text-align: left;
 }
 
-/* Hide scrollbar */
 .left-column-content::-webkit-scrollbar {
   display: none;
 }
@@ -80,18 +79,18 @@ header {
 /* Right Column Styling */
 .right-column {
   flex: 2;
-  background-color: #E0E0E0; /* Light gray */
+  background-color: #E0E0E0;
   display: flex;
   justify-content: center;
   align-items: center;
-  position: relative; /* Needed for absolute positioning of tooltip if it were inside */
+  position: relative;
 }
 
 /* Footer Styling */
 footer {
   position: fixed;
   bottom: 0;
-  background-color: #4682B4; /* SteelBlue */
+  background-color: #5C4D7D; /* Deep Purple */
   display: flex;
   justify-content: center;
   align-items: center;
@@ -108,7 +107,7 @@ footer {
   border: none;
   border-radius: 5px;
   background-color: white;
-  color: #4682B4;
+  color: #5C4D7D;
   cursor: pointer;
   transition: all 0.3s;
 }
@@ -124,7 +123,7 @@ footer {
   list-style-type: none;
   padding: 0px;
   font-weight: 300;
-  color: #666;
+  color: #374151; /* Charcoal Gray */
   margin: 2em 0;
   transition: all 0.5s ease;
   max-width: 90%;
@@ -132,78 +131,67 @@ footer {
   white-space: normal;
 }
 
-/* SVG and Chart Styling */
 svg {
-  background-color: #f5f5f5;
+  background-color: #F3F4F6; /* Soft Stone */
   border-radius: 8px;
   width: 90%;
   height: 80%;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  display: block; /* Helps prevent extra space below SVG */
+  display: block;
 }
 
-/* Active Verse and Line Styling */
 .active-verse {
   font-weight: 700;
-  color: #000;
+  color:#d7b5d8 ; /* Royal Purple */
   transform: scale(1.02);
 }
 
 .active-line {
-  color: #2563EB; /* Blue */
+  color: #6D28D9; /* Match Royal Purple for unity */
   font-weight: 600;
 }
 
-/* Filler Verse for Spacing */
 .filler-verse {
   height: 150px;
 }
 
-/* Hoverable Word Styling */
 .hoverable-word {
   text-decoration: underline;
   text-decoration-style: dotted;
   position: relative;
 }
 
-/* Bar Styles */
 .bar {
-  transition: opacity 0.3s ease; /* Smooth transition */
+  transition: opacity 0.3s ease;
 }
 
-.bar:hover { /* Optional: subtle hover effect on bars */
-    opacity: 0.8;
-}
-
-.men-bar {
-  fill: #2563EB;
-}
-
-.women-bar {
-  fill: #DB2777;
-}
-
-/* Stacked Bar Hover */
-.men-stack rect:hover, .women-stack rect:hover {
-    opacity: 0.8;
+.bar:hover {
+  opacity: 0.8;
 }
 
 
-/* Box Plot Hover */
+
+.men-stack rect:hover,
+.women-stack rect:hover {
+  opacity: 0.8;
+}
+
 .box-group:hover .box {
-    opacity: 0.4; /* Example: change opacity */
-}
-.box-group:hover .median-line {
-    stroke-width: 3.5px; /* Example: thicken median */
+  opacity: 0.4;
 }
 
+.box-group:hover .median-line {
+  stroke-width: 3.5px;
+}
 
 text {
   fill: #333;
   font-size: 12px;
 }
 
-.x-axis-label, .y-axis-label, .chart-title {
+.x-axis-label,
+.y-axis-label,
+.chart-title {
   fill: #333;
   font-size: 14px;
 }
@@ -213,18 +201,12 @@ text {
   font-weight: bold;
 }
 
-.gap-line {
-  stroke: #047857;
-  stroke-width: 2;
-  stroke-dasharray: 5,5;
-  fill: none;
-}
+
 
 .gap-point {
-  fill: #047857;
+  fill: #3AAFA9;
 }
 
-/* Legend Styling */
 .legend-item {
   font-size: 14px;
 }

@@ -8,7 +8,7 @@ async function loadData() {
         age: +d.age,
         sex: d.sex,
         race: d.race,
-        incwage: +d.incwage,
+        incwage: +d.inflated_wage,
         annhrs: +d.annhrs,
         Occupation: d.Occupation,
         Education: d.Education,

@@ -1,6 +1,6 @@
 let svg = d3.select("#svg");
 let width = parseInt(svg.style("width")) || 800;
-let height = parseInt(svg.style("height")) || 500;
+let height = parseInt(svg.style("height")) || 1000;
 
 // Adjusted margins to allow space for the legend
 let margin = { top: 50, right: 80, bottom: 100, left: 80 }; // Increased bottom margin

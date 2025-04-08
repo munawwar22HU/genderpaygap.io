@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 # Load the dataset
-df = pd.read_csv("data/gender-pay-gap-dataset_2.csv")
+df = pd.read_csv("data/gender-pay-gap-dataset_3.csv")
 print(df.columns)
 
 # Assuming 'ft' is 1 for full-time
@@ -11,6 +11,11 @@ df['ft_status'] = df['ft'].replace({1: 'Full Time', 0: 'Part Time'})
 
 # Drop the original 'ft' column
 df = df.drop(columns=['ft'])
+
+df['inflated_wage'] = df['annhrs'] * df['realhrwage']
+
+df.drop(columns=['inflate', 'realhrwage'], inplace=True)
+
 
 # List of occupation columns (assuming these are one-hot encoded)
 occupation_columns = [
