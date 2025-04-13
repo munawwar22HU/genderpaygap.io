@@ -1,20 +1,79 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Gender Pay Gap: A Scrollytelling Experience</title>
+    <title>Gender Wage Gap: A Scrollytelling Experience</title>
     <link rel="stylesheet" type="text/css" href="styles.css" />
+    <link rel="stylesheet" type="text/css" href="zoom-styles.css" />
+    <link rel="stylesheet" type="text/css" href="popup-styles.css" />
     <script src="https://d3js.org/d3.v7.min.js"></script>
   </head>
   <body>
+    <!-- Info Button -->
+    <button class="info-button" id="info-button">i</button>
+
+    <!-- Overlay Background -->
+    <div class="overlay" id="overlay"></div>
+
+    <!-- Instructions Popup -->
+    <div class="instructions-popup" id="instructions-popup">
+      <div class="popup-header">
+        <h1 class="popup-title">Gender Wage Gap Visualization</h1>
+        <button class="close-popup" id="close-popup">&times;</button>
+      </div>
+      
+      <div class="popup-content">
+        <p>
+          Welcome to this interactive visualization exploring the gender wage gap across different demographics and time periods.
+          This visualization uses scrollytelling to guide you through various insights about wage disparities.
+        </p>
+        
+        <h2>Navigation Instructions</h2>
+        <ul>
+          <li><strong>Arrow Buttons:</strong> Use the arrow buttons at the bottom of the page to navigate through different visualizations.</li>
+          <li><strong>Mouse Wheel:</strong> You can also scroll with your mouse wheel to move between visualizations.</li>
+          <li><strong>Hover:</strong> Hover over data points to see detailed information.</li>
+          <li><strong>Zoom Controls:</strong> Use the controls in the top right of the visualization to filter and zoom data (available for bar charts and box plots).</li>
+        </ul>
+        
+        <h2>Types of Visualizations</h2>
+        <ul>
+          <li><strong>Line Chart:</strong> Shows the trend of men's and women's wages over time, with the percentage gap.</li>
+          <li><strong>Bar Charts:</strong> Compare wages across different categories like age groups, occupations, and education levels.</li>
+          <li><strong>Stacked Bar Chart:</strong> Shows the proportion of men and women in different occupations.</li>
+          <li><strong>Box Plot:</strong> Displays the distribution of hours worked by full-time and part-time workers by gender.</li>
+        </ul>
+        
+        <h2>Filtering Data</h2>
+        <p>
+          Each visualization (except the line chart) has specific filter controls in the top right panel:
+        </p>
+        <ul>
+          <li><strong>Category Filter:</strong> For bar charts, select which categories to display.</li>
+          <li><strong>Employment Type Filter:</strong> For box plots, filter by employment type.</li>
+        </ul>
+        
+        <div class="author-info">
+          <p>Created by: Muhammad Munawwar Anwar, Harsit Upadhya, DongWhan Jun</p>
+          <p>Based on data from the Kaggle</p>
+          <a href=https://www.kaggle.com/datasets/fedesoriano/gender-pay-gap-dataset class="dataset-link" target="_blank">
+            Learn more about the dataset
+          </a>
+        </div>
+        
+        <div class="branch-info">
+          <p><strong>Development Note:</strong> Everything is committed in the filter branch, you can work on top of that.</p>
+        </div>
+      </div>
+    </div>
+    
     <header>
-      <h1 class="title">The Gender Pay Gap</h1>
+      <h1 class="title">The Gender Wage Gap</h1>
     </header>
     <main class="wrapper">
       <div class="left-column">
         <div class="left-column-content">
-          <!-- Filler verse for vertical centering -->
           <div class="filler-verse"></div>
-          
+
           <ul class="verse" id="verse1">
             <li class="line" id="line1">From '81 to 2013, the numbers tell,</li>
             <li class="line" id="line2">A story of wages, some rise, some fell.</li>
@@ -42,22 +101,21 @@
             <li class="line" id="line3">Men's pay outpaces at every stage,</li>
             <li class="line" id="line4">The gap most glaring at full-time wage.</li>
           </ul>
-          
+
           <ul class="verse" id="verse5">
             <li class="line" id="line1">With knowledge comes power, or so we're told,</li>
             <li class="line" id="line2">Yet diplomas and degrees don't guarantee gold</span>.</li>
             <li class="line" id="line3">Master's degrees and doctorates attained,</li>
             <li class="line" id="line4">Still find the wage gap stubbornly maintained.</li>
           </ul>
-          
+
           <ul class="verse" id="verse6">
             <li class="line" id="line1">Across the spectrum of heritage and skin,</li>
             <li class="line" id="line2">Multiple factors make this gap begin.</li>
             <li class="line" id="line3">For women of color, two barriers arise,</li>
             <li class="line" id="line4">Where gender and race create divides of surprising size.</li>
           </ul>
-          
-          <!-- Filler verse for vertical centering -->
+
           <div class="filler-verse"></div>
         </div>
       </div>
@@ -66,9 +124,12 @@
       </div>
     </main>
     <footer>
-      <button class="arrow-button" id="backward-button">◄</button>
-      <button class="arrow-button" id="forward-button">►</button>
+      <button class="arrow-button" id="backward-button">←</button>
+      <button class="arrow-button" id="forward-button">→</button>
     </footer>
+
+    <div id="tooltip"></div>
+    
     <script src="chartNavigation.js"></script>
     <script src="data.js"></script>
     <script src="lineChart.js"></script>
@@ -76,6 +137,8 @@
     <script src="horizontalBar.js"></script>
     <script src="stackedBar.js"></script>
     <script src="boxPlot.js"></script>
+    <script src="zoomFeatures.js"></script>
+    <script src="popup.js"></script>
     <script src="main.js"></script>
   </body>
 </html>

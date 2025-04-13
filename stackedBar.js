@@ -1,24 +1,34 @@
-function drawOccupationStackedBarChart(occupationData) {
+function drawOccupationStackedBarChart(occupationProportionData) {
   clearChartArea();
-  currentChartType = "bar";
+  currentChartType = "stackedbar";
+  const tooltip = d3.select("#tooltip");
 
-  // Increase bottom margin to provide more space for rotated labels
-  const bottomMargin = 100; // Increased margin for labels
-  const adjustedInnerHeight = innerHeight - bottomMargin;
+  const bottomMargin = 100;
+  const chartHeight = typeof height !== "undefined" ? height : 600;
+  const chartWidth = typeof width !== "undefined" ? width : 800;
+  const marginTop =
+    typeof margin !== "undefined" && margin.top ? margin.top : 50;
+  const marginRight =
+    typeof margin !== "undefined" && margin.right ? margin.right : 50;
+  const marginBottom =
+    typeof margin !== "undefined" && margin.bottom ? margin.bottom : 50;
+  const marginLeft =
+    typeof margin !== "undefined" && margin.left ? margin.left : 50;
 
-  // Create the container group
+  const adjustedInnerHeight =
+    chartHeight - marginTop - marginBottom - bottomMargin;
+  const adjustedInnerWidth = chartWidth - marginLeft - marginRight;
+
   const g = svg
     .append("g")
-    .attr("transform", `translate(${margin.left}, ${margin.top})`);
+    .attr("transform", `translate(${marginLeft}, ${marginTop})`);
 
-  // X-axis scale (categorical for occupations)
   const xScale = d3
     .scaleBand()
-    .domain(occupationData.map((d) => d.occupation))
-    .range([0, innerWidth])
+    .domain(occupationProportionData.map((d) => d.occupation))
+    .range([0, adjustedInnerWidth])
     .padding(0.2);
 
-  // Append x-axis with rotated labels
   g.append("g")
     .attr("transform", `translate(0, ${adjustedInnerHeight})`)
     .call(d3.axisBottom(xScale).tickSize(0))
@@ -26,9 +36,8 @@ function drawOccupationStackedBarChart(occupationData) {
     .style("text-anchor", "start")
     .attr("dx", "0.5em")
     .attr("dy", "0")
-    .attr("transform", "rotate(90)"); // Rotate 45 degrees instead of 90 for better readability
+    .attr("transform", "rotate(90)");
 
-  // Y-axis scale (percentage from 0 to 100)
   const yScale = d3
     .scaleLinear()
     .domain([0, 100])
@@ -36,67 +45,123 @@ function drawOccupationStackedBarChart(occupationData) {
 
   g.append("g").call(d3.axisLeft(yScale).tickFormat((d) => `${d}%`));
 
-  // Define colors
-  const colors = { men: "#2563EB", women: "#DB2777" };
+  const colors = {
+    men: CHART_COLORS.PRIMARY_1,
+    women: CHART_COLORS.PRIMARY_2,
+  };
 
-  // Create groups for bars
-  const bars = g
-    .selectAll(".bar-group")
-    .data(occupationData)
-    .enter()
-    .append("g")
-    .attr("transform", (d) => `translate(${xScale(d.occupation)}, 0)`);
+  const stackKeys = ["menPercentage", "womenPercentage"];
+  const stackedData = d3.stack().keys(stackKeys)(occupationProportionData);
 
-  // Draw men bars
-  bars
-    .append("rect")
-    .attr("y", (d) => yScale(d.menPercentage))
-    .attr("height", (d) => adjustedInnerHeight - yScale(d.menPercentage))
+  const mouseover = function (event, d) {
+    const parentData = d3.select(this.parentNode).datum();
+    const key = parentData.key;
+    const percentage = d[1] - d[0];
+    const gender = key === "menPercentage" ? "Men" : "Women";
+
+    tooltip
+      .html(
+        `<strong>Occupation:</strong> ${d.data.occupation}<br/>` +
+          `<strong>${gender}:</strong> ${percentage.toFixed(1)}%`
+      )
+      .classed("visible", true);
+  };
+
+  const mousemove = function (event, d) {
+    const tooltipNode = tooltip.node();
+    if (!tooltipNode) return;
+    const tooltipWidth = tooltipNode.offsetWidth;
+    const tooltipHeight = tooltipNode.offsetHeight;
+    const pageX = event.pageX;
+    const pageY = event.pageY;
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const scrollY = window.scrollY;
+    let xPosition = pageX + 15;
+    let yPosition = pageY - 10;
+    if (xPosition + tooltipWidth > viewportWidth) {
+      xPosition = pageX - tooltipWidth - 15;
+    }
+    if (yPosition < scrollY) {
+      yPosition = scrollY + 5;
+    } else if (yPosition + tooltipHeight > scrollY + viewportHeight) {
+      yPosition = scrollY + viewportHeight - tooltipHeight - 5;
+    }
+    tooltip.style("left", xPosition + "px").style("top", yPosition + "px");
+  };
+
+  const mouseout = function (event, d) {
+    tooltip.classed("visible", false);
+  };
+
+  g.append("g")
+    .selectAll("g")
+    .data(stackedData)
+    .join("g")
+    .attr("fill", (d) => colors[d.key === "menPercentage" ? "men" : "women"])
+    .attr("class", (d) =>
+      d.key === "menPercentage" ? "men-stack" : "women-stack"
+    )
+    .selectAll("rect")
+    .data((d) => d)
+    .join("rect")
+    .attr("x", (d) => xScale(d.data.occupation))
+    .attr("y", (d) => yScale(d[1]))
+    .attr("height", (d) => Math.max(0, yScale(d[0]) - yScale(d[1])))
     .attr("width", xScale.bandwidth())
-    .attr("fill", colors.men);
+    .style("cursor", "pointer")
+    .on("mouseover", mouseover)
+    .on("mousemove", mousemove)
+    .on("mouseout", mouseout);
 
-  // Draw women bars stacked on top
-  bars
-    .append("rect")
-    .attr("y", (d) => yScale(d.menPercentage + d.womenPercentage))
-    .attr("height", (d) => adjustedInnerHeight - yScale(d.womenPercentage))
-    .attr("width", xScale.bandwidth())
-    .attr("fill", colors.women);
+  g.append("text")
+    .attr("x", adjustedInnerWidth / 2)
+    .attr("y", adjustedInnerHeight + 150)
+    .attr("text-anchor", "middle")
+    .text("Occupation Types");
 
-  // Create a simple legend container below the SVG axes
+  g.append("text")
+    .attr("transform", "rotate(-90)")
+    .attr("y", -50)
+    .attr("x", -adjustedInnerHeight / 2)
+    .attr("text-anchor", "middle")
+    .text("Percentage (%)");
+
   const legend = svg.append("g").attr(
     "transform",
-    `translate(${margin.left + innerWidth / 4}, ${
-      innerHeight + margin.bottom + 10
-    })` // Adjusted for better centering
-  ); // Centered and pushed further down
+    `translate(${marginLeft + adjustedInnerWidth / 4}, ${
+      chartHeight - bottomMargin + 50 
+    })`
+  );
 
-  // Men's wage legend
   legend
     .append("circle")
     .attr("cx", 0)
-    .attr("cy", 10)
+    .attr("cy", 20)
     .attr("r", 6)
-    .attr("fill", "#2563EB");
+    .attr("fill", CHART_COLORS.PRIMARY_1);
+  legend
+    .append("text")
+    .attr("x", 15)
+    .attr("y", 25)
+    .text("Men (% of Workforce)");
 
-  legend.append("text").attr("x", 15).attr("y", 15).text("Men's Wage");
-
-  // Women's wage legend
   legend
     .append("circle")
-    .attr("cx", 120)
-    .attr("cy", 10)
+    .attr("cx", 145)
+    .attr("cy", 20)
     .attr("r", 6)
-    .attr("fill", "#DB2777");
+    .attr("fill", CHART_COLORS.PRIMARY_2);
+  legend
+    .append("text")
+    .attr("x", 160)
+    .attr("y", 25)
+    .text("Women (% of Workforce)");
 
-  legend.append("text").attr("x", 135).attr("y", 15).text("Women's Wage");
-
-  
-  // Chart title
   g.append("text")
-    .attr("x", innerWidth / 2)
+    .attr("x", adjustedInnerWidth / 2)
     .attr("y", -20)
     .attr("text-anchor", "middle")
     .attr("class", "chart-title")
-    .text("Gender Proportion by Occupation");
+    .text("Gender Distribution by Occupation");
 }

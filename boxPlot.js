@@ -1,148 +1,168 @@
 function drawHoursBoxPlot(hoursData) {
   clearChartArea();
   currentChartType = "box";
-  
-  // Prepare data - calculate hourly rate and normalize hours
-  const boxplotData = hoursData.map(d => ({
-    ...d,
-    // Convert total hours to hours per week
-    hourlyRate: Math.round(d.medianWage / (d.median / 40)),
-    averageHoursPerWeek: d.median / 40
-  }));
-  
-  // Maximize margins for full use of the available space
-  const margin = { top: 80, right: 100, bottom: 80, left: 200 };  // Reduced bottom margin
-  const innerWidth = width - margin.left - margin.right;
-  const innerHeight = height - margin.top - margin.bottom;
 
-  // Create the container group
+  const tooltip = d3.select("#tooltip");
+  if (tooltip.empty()) {
+    console.error("Tooltip element #tooltip not found.");
+    return;
+  }
+
+  const boxplotData = hoursData.map((d) => ({ ...d }));
+
+  const chartHeight = typeof height !== "undefined" ? height : 600;
+  const chartWidth = typeof width !== "undefined" ? width : 800;
+  const adjustedMargin = { top: 80, right: 100, bottom: 80, left: 200 };
+  const innerWidth = chartWidth - adjustedMargin.left - adjustedMargin.right;
+  const innerHeight = chartHeight - adjustedMargin.top - adjustedMargin.bottom;
+
   const g = svg
     .append("g")
-    .attr("transform", `translate(${margin.left}, ${margin.top})`);
+    .attr(
+      "transform",
+      `translate(${adjustedMargin.left}, ${adjustedMargin.top})`
+    );
 
-  // Title 
   g.append("text")
     .attr("class", "chart-title")
     .attr("x", innerWidth / 2)
     .attr("y", -20)
     .attr("text-anchor", "middle")
-    .text("Annual Hours Worked Distribution");
+    .text("Annual hours worked distribution by gender");
 
-  // Y axis scale and axis for the boxplot
   const y = d3
     .scaleBand()
-    .domain(boxplotData.map(d => d.category))
+    .domain(boxplotData.map((d) => d.category))
     .range([0, innerHeight])
     .padding(0.2);
-    
-  g.append("g")
-    .call(d3.axisLeft(y));
 
-  // X axis scale and axis for the boxplot (annual hours)
+  g.append("g").call(d3.axisLeft(y));
+
   const x = d3
     .scaleLinear()
     .domain([
-      Math.min(0, d3.min(boxplotData, d => d.min)),
-      Math.max(6000, d3.max(boxplotData, d => d.max))
+      Math.min(0, d3.min(boxplotData, (d) => d.min) * 0.95),
+      d3.max(boxplotData, (d) => d.max) * 1.05,
     ])
     .range([0, innerWidth]);
-    
+
   g.append("g")
     .attr("transform", `translate(0, ${innerHeight})`)
     .call(d3.axisBottom(x).tickFormat(d3.format(".0f")));
 
-  // X axis label for annual hours
   g.append("text")
     .attr("x", innerWidth / 2)
     .attr("y", innerHeight + 40)
     .attr("text-anchor", "middle")
-    .text("Annual Hours Worked");
+    .text("Annual hours worked");
 
-  // Box plots
-  boxplotData.forEach((d, i) => {
+  g.append("text")
+    .attr("transform", "rotate(-90)")
+    .attr("y", -120) // Adjusted position
+    .attr("x", -innerHeight / 2)
+    .attr("text-anchor", "middle")
+    .text("Employment Type & Gender");
+
+  const mouseover = function (event, d) {
+    tooltip
+      .html(`<strong>Median Wage:</strong> $${d.medianWage.toLocaleString()}`)
+      .classed("visible", true);
+  };
+
+  const mousemove = function (event, d) {
+    const tooltipNode = tooltip.node();
+    if (!tooltipNode) return;
+
+    const tooltipWidth = tooltipNode.offsetWidth;
+    const tooltipHeight = tooltipNode.offsetHeight;
+    const pageX = event.pageX;
+    const pageY = event.pageY;
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const scrollY = window.scrollY;
+
+    let xPosition = pageX + 15;
+    let yPosition = pageY - 10;
+
+    if (xPosition + tooltipWidth > viewportWidth) {
+      xPosition = pageX - tooltipWidth - 15;
+    }
+
+    if (yPosition < scrollY) {
+      yPosition = scrollY + 5;
+    } else if (yPosition + tooltipHeight > scrollY + viewportHeight) {
+      yPosition = scrollY + viewportHeight - tooltipHeight - 5;
+    }
+
+    tooltip.style("left", xPosition + "px").style("top", yPosition + "px");
+  };
+
+  const mouseout = function (event, d) {
+    tooltip.classed("visible", false);
+  };
+
+  const boxGroups = g
+    .selectAll(".box-group")
+    .data(boxplotData)
+    .join("g")
+    .attr("class", "box-group")
+    .attr("transform", (d) => `translate(0, ${y(d.category)})`)
+    .style("cursor", "pointer")
+    .on("mouseover", mouseover)
+    .on("mousemove", mousemove)
+    .on("mouseout", mouseout);
+
+  boxGroups.each(function (d) {
+    const currentGroup = d3.select(this);
     const boxHeight = y.bandwidth();
-    const category = d.category;
-    const yPos = y(category);
-    const baseColor = category.includes('Male') ? "#2563EB" : "#DB2777";
-    
-    // Min-max line
-    g.append("line")
+    const baseColor = d.category.includes("Male")
+      ? CHART_COLORS.PRIMARY_1
+      : CHART_COLORS.PRIMARY_2;
+
+    currentGroup
+      .append("line")
+      .attr("class", "whisker-line")
       .attr("x1", x(d.min))
       .attr("x2", x(d.max))
-      .attr("y1", yPos + boxHeight / 2)
-      .attr("y2", yPos + boxHeight / 2)
+      .attr("y1", boxHeight / 2)
+      .attr("y2", boxHeight / 2)
       .attr("stroke", "#999")
       .attr("stroke-width", 1.5);
 
-    // Whiskers
     ["min", "max"].forEach((type) => {
-      g.append("line")
+      currentGroup
+        .append("line")
+        .attr("class", "whisker-end")
         .attr("x1", x(d[type]))
         .attr("x2", x(d[type]))
-        .attr("y1", yPos + boxHeight / 2 - 5)
-        .attr("y2", yPos + boxHeight / 2 + 5)
+        .attr("y1", boxHeight / 2 - 5)
+        .attr("y2", boxHeight / 2 + 5)
         .attr("stroke", "#666")
         .attr("stroke-width", 1.5);
     });
 
-    // Box from Q1 to Q3
-    g.append("rect")
+    currentGroup
+      .append("rect")
+      .attr("class", "box")
       .attr("x", x(d.q1))
-      .attr("y", yPos + boxHeight / 4)
-      .attr("width", x(d.q3) - x(d.q1))
+      .attr("y", boxHeight / 4)
+      .attr("width", Math.max(0, x(d.q3) - x(d.q1)))
       .attr("height", boxHeight / 2)
       .attr("fill", baseColor)
       .attr("opacity", 0.2)
       .attr("stroke", baseColor)
       .attr("stroke-width", 1);
 
-    // Median line
-    g.append("line")
+    currentGroup
+      .append("line")
+      .attr("class", "median-line")
       .attr("x1", x(d.median))
       .attr("x2", x(d.median))
-      .attr("y1", yPos + boxHeight / 4)
-      .attr("y2", yPos + boxHeight * 3/4)
+      .attr("y1", boxHeight / 4)
+      .attr("y2", (boxHeight * 3) / 4)
       .attr("stroke", baseColor)
       .attr("stroke-width", 2.5);
-
-    // Median wage annotation
-    g.append("text")
-      .attr("x", x(d.max) + 15)
-      .attr("y", yPos + boxHeight / 2)
-      .attr("font-size", "11px")
-      .attr("fill", "#444")
-      .text(`$${d.medianWage.toLocaleString()} annual`)
-      .attr("alignment-baseline", "middle");
   });
 
-  // Create a simple legend container below the SVG axes
-  const legend = svg.append("g").attr(
-    "transform",
-    `translate(${margin.left + innerWidth / 4}, ${
-      innerHeight + margin.bottom + 40
-    })` // Adjusted for better centering
-  ); // Centered and pushed further down
-
-  // Men's wage legend
-  legend
-    .append("circle")
-    .attr("cx", 0)
-    .attr("cy", 10)
-    .attr("r", 6)
-    .attr("fill", "#2563EB");
-
-  legend.append("text").attr("x", 15).attr("y", 15).text("Men's Wage");
-
-  // Women's wage legend
-  legend
-    .append("circle")
-    .attr("cx", 120)
-    .attr("cy", 10)
-    .attr("r", 6)
-    .attr("fill", "#DB2777");
-
-  legend.append("text").attr("x", 135).attr("y", 15).text("Women's Wage");
-
   
-
 }

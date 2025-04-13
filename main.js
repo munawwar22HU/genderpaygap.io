@@ -2,6 +2,14 @@ let svg = d3.select("#svg");
 let width = parseInt(svg.style("width")) || 800;
 let height = parseInt(svg.style("height")) || 500;
 
+// Global color constants for consistent color scheme
+const CHART_COLORS = {
+  PRIMARY_1: "#7E6A9F", // Dusty indigo (carried from your example)
+  PRIMARY_2: "#A7C957", // Chartreuse green (fresh & unexpected)
+  ACCENT: "#F4A261",    // Soft orange (pops but not harsh)
+  BG_LIGHT: "#FAFAFA",  // Very light gray
+  TEXT_DARK: "#222222", // Deep charcoal
+};
 // Adjusted margins to allow space for the legend
 let margin = { top: 50, right: 80, bottom: 100, left: 80 }; // Increased bottom margin
 let innerWidth = width - margin.left - margin.right;
@@ -91,8 +99,6 @@ function WagesByHours() {
   drawHoursBoxPlot(hoursData);
 }
 
-
-
 // Initialize SVG
 function initializeSVG() {
   svg.attr("width", width).attr("height", height);
@@ -109,6 +115,9 @@ async function initialise() {
 
   // Initialize SVG
   initializeSVG();
+  
+  // Initialize instructions popup
+  initializeInstructionsPopup();
 
   // Load data
   data = await loadData();
