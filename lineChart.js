@@ -47,20 +47,20 @@ function drawLineChart(yearlyData) {
     .attr("y", -60)
     .attr("x", -innerHeight / 2)
     .attr("text-anchor", "middle")
-    .text("Annual Wage ($)");
+    .text("Annual Wage (2010 Dollars, PCE-Adjusted) ($)");
   g.append("text")
     .attr("transform", "rotate(90)")
     .attr("y", -innerWidth - 60)
     .attr("x", innerHeight / 2)
     .attr("text-anchor", "middle")
-    .text("Pay Gap (%)");
+    .text("Wage Gap (%)");
 
   g.append("text")
     .attr("class", "chart-title")
     .attr("x", innerWidth / 2)
     .attr("y", -20)
     .attr("text-anchor", "middle")
-    .text("Gender Pay Gap Trends (1981-2013)");
+    .text("Gender Wage Gap Trends (1981-2013)");
 
   const menLine = d3
     .line()
@@ -154,7 +154,6 @@ function drawLineChart(yearlyData) {
     tooltip.classed("visible", false);
   };
 
-  
   const mouseoverMen = function (event, d) {
     tooltip
       .html(
@@ -181,7 +180,6 @@ function drawLineChart(yearlyData) {
       )
       .classed("visible", true);
   };
-  
 
   g.selectAll(".men-dot")
     .data(yearlyData)
@@ -256,5 +254,5 @@ function drawLineChart(yearlyData) {
     .attr("stroke", CHART_COLORS.ACCENT)
     .attr("stroke-width", 2)
     .attr("stroke-dasharray", "5,5");
-  legend.append("text").attr("x", 270).attr("y", 15).text("Pay Gap (%)");
+  legend.append("text").attr("x", 270).attr("y", 15).text("Wage Gap (%)");
 }

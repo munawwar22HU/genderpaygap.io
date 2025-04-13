@@ -37,14 +37,14 @@ function drawAgeVerticalBarChart(ageData) {
     .attr("y", -60)
     .attr("x", -innerHeight / 2)
     .attr("text-anchor", "middle")
-    .text("Annual Wage ($)");
+    .text("Annual Wage (2010 Dollars, PCE-Adjusted) ($)");
 
   g.append("text")
     .attr("class", "chart-title")
     .attr("x", innerWidth / 2)
     .attr("y", -20)
     .attr("text-anchor", "middle")
-    .text("Gender Pay Gap by Age Group");
+    .text("Gender Wage Gap by Age Group");
 
   const xSubgroup = d3
     .scaleBand()
@@ -204,7 +204,7 @@ function drawRaceVerticalBarChart(raceData) {
     .attr("y", -60)
     .attr("x", -innerHeight / 2)
     .attr("text-anchor", "middle")
-    .text("Annual Wage ($)");
+    .text("Annual Wage (2010 Dollars, PCE-Adjusted) ($)");
 
   g.append("text")
     .attr("x", innerWidth / 2)

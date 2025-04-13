@@ -22,7 +22,7 @@ function drawOccupationHorizontalBarChart(occupationData) {
     .attr("x", adjustedInnerWidth / 2)
     .attr("y", -20)
     .attr("text-anchor", "middle")
-    .text("Income by Occupation and Gender");
+    .text("Annual Wage by Occupation and Gender");
 
   // Draw horizontal bar chart
   drawHorizontalBars(
@@ -80,7 +80,7 @@ function drawEducationHorizontalBarChart(educationData) {
     .attr("x", adjustedInnerWidth / 2)
     .attr("y", -20)
     .attr("text-anchor", "middle")
-    .text("Income by Education Level and Gender");
+    .text("Annual Wage by Education Level and Gender");
 
   // Draw horizontal bar chart
   drawHorizontalBars(
@@ -137,7 +137,7 @@ function drawHorizontalBars(
     .attr("x", adjustedInnerWidth / 2 - 50)
     .attr("y", innerHeight + 40)
     .attr("text-anchor", "middle")
-    .text("Income ($)");
+    .text("Annual Wage (2010 Dollars, PCE-Adjusted) ($)");
 
   // --- Men's Tooltip Event Handler ---
   const menMouseover = function (event, d) {
@@ -226,14 +226,14 @@ function drawHorizontalBars(
     .attr("cx", 0)
     .attr("cy", 10)
     .attr("r", 6)
-    .attr("fill", "#5A67D8");
+    .attr("fill", CHART_COLORS.PRIMARY_1);
   legend.append("text").attr("x", 15).attr("y", 15).text("Men's Wage");
   legend
     .append("circle")
     .attr("cx", 120)
     .attr("cy", 10)
     .attr("r", 6)
-    .attr("fill", "#F6AD55");
+    .attr("fill", CHART_COLORS.PRIMARY_2);
   legend.append("text").attr("x", 135).attr("y", 15).text("Women's Wage");
 }
 
