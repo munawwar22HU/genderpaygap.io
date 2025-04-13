@@ -4,13 +4,12 @@ let height = parseInt(svg.style("height")) || 500;
 
 // Global color constants for consistent color scheme
 const CHART_COLORS = {
-  PRIMARY_1: "#6366F1", // Indigo for one gender (replaces blue)
-  PRIMARY_2: "#10B981", // Emerald green for other gender (replaces pink)
-  ACCENT: "#F59E0B",    // Amber for accent/gap visualization
-  BG_LIGHT: "#F5F5F5",  // Light background
-  TEXT_DARK: "#333333", // Dark text
+  PRIMARY_1: "#7E6A9F", // Dusty indigo (carried from your example)
+  PRIMARY_2: "#A7C957", // Chartreuse green (fresh & unexpected)
+  ACCENT: "#F4A261",    // Soft orange (pops but not harsh)
+  BG_LIGHT: "#FAFAFA",  // Very light gray
+  TEXT_DARK: "#222222", // Deep charcoal
 };
-
 // Adjusted margins to allow space for the legend
 let margin = { top: 50, right: 80, bottom: 100, left: 80 }; // Increased bottom margin
 let innerWidth = width - margin.left - margin.right;

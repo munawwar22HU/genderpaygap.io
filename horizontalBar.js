@@ -1,21 +1,30 @@
 function drawOccupationHorizontalBarChart(occupationData) {
   clearChartArea();
   currentChartType = "bar";
+
   const sortedData = [...occupationData].sort((a, b) => b.menWage - a.menWage);
-  const adjustedMargin = { ...margin, left: margin.left + 100 }; // Assuming margin is global
-  const adjustedInnerWidth = width - adjustedMargin.left - margin.right; // Assuming width is global
+
+  // Adjust margins and width
+  const adjustedMargin = { ...margin, left: margin.left + 100 };
+  const adjustedInnerWidth = width - adjustedMargin.left - margin.right;
+
+  // Create the container group
   g = svg
     .append("g")
     .attr(
       "transform",
       `translate(${adjustedMargin.left}, ${adjustedMargin.top})`
     );
+
+  // Add chart title
   g.append("text")
     .attr("class", "chart-title")
     .attr("x", adjustedInnerWidth / 2)
     .attr("y", -20)
     .attr("text-anchor", "middle")
     .text("Income by Occupation and Gender");
+
+  // Draw horizontal bar chart
   drawHorizontalBars(
     sortedData,
     adjustedMargin,
@@ -27,6 +36,8 @@ function drawOccupationHorizontalBarChart(occupationData) {
 function drawEducationHorizontalBarChart(educationData) {
   clearChartArea();
   currentChartType = "bar";
+
+  // Order and sort data
   const educationOrder = [
     "None",
     "Grade 1",
@@ -50,20 +61,28 @@ function drawEducationHorizontalBarChart(educationData) {
     (a, b) =>
       educationOrder.indexOf(a.education) - educationOrder.indexOf(b.education)
   );
-  const adjustedMargin = { ...margin, left: margin.left + 100 }; // Assuming margin is global
-  const adjustedInnerWidth = width - adjustedMargin.left - margin.right; // Assuming width is global
+
+  // Adjust margins and width
+  const adjustedMargin = { ...margin, left: margin.left + 100 };
+  const adjustedInnerWidth = width - adjustedMargin.left - margin.right;
+
+  // Create the container group
   g = svg
     .append("g")
     .attr(
       "transform",
       `translate(${adjustedMargin.left}, ${adjustedMargin.top})`
     );
+
+  // Add chart title
   g.append("text")
     .attr("class", "chart-title")
     .attr("x", adjustedInnerWidth / 2)
     .attr("y", -20)
     .attr("text-anchor", "middle")
     .text("Income by Education Level and Gender");
+
+  // Draw horizontal bar chart
   drawHorizontalBars(
     sortedData,
     adjustedMargin,
@@ -81,20 +100,16 @@ function drawHorizontalBars(
 ) {
   // Select Tooltip
   const tooltip = d3.select("#tooltip");
-  if (tooltip.empty()) {
-    console.error("Tooltip element #tooltip not found.");
-    return;
-  }
 
   const categoryKey = dataType === "occupation" ? "occupation" : "education";
   const categories = data.map((d) => d[categoryKey]);
 
-  // Y-axis scale with increased padding (0.3 instead of 0.1)
+  // Y-axis scale
   const y = d3
     .scaleBand()
     .domain(categories)
     .range([0, innerHeight])
-    .padding(0.3); // Increased padding for better separation
+    .padding(0.3);
 
   // Y-axis draw and wrap
   const yAxis = g.append("g").call(d3.axisLeft(y));
@@ -103,7 +118,7 @@ function drawHorizontalBars(
     .style("text-anchor", "end")
     .attr("dx", "-10px")
     .style("font-size", "10px")
-    .call(wrap, adjustedMargin.left - 20); // Use wrap function
+    .call(wrap, adjustedMargin.left - 20);
 
   // X-axis scale
   const maxWage = d3.max(data, (d) => Math.max(d.menWage, d.womenWage));
@@ -122,108 +137,82 @@ function drawHorizontalBars(
     .attr("x", adjustedInnerWidth / 2 - 50)
     .attr("y", innerHeight + 40)
     .attr("text-anchor", "middle")
-    .text("Annual Income ($)");
+    .text("Income ($)");
 
-  // Add Y-axis label for clarity
-  g.append("text")
-    .attr("transform", "rotate(-90)")
-    .attr("y", -adjustedMargin.left + 20)
-    .attr("x", -innerHeight / 2)
-    .attr("text-anchor", "middle")
-    .text(dataType === "occupation" ? "Occupation Type" : "Education Level");
-
-  // --- Tooltip Event Handlers ---
-  const mousemove = function (event, d) {
-    // Generic mousemove
-    const tooltipNode = tooltip.node();
-    if (!tooltipNode) return;
-    const tooltipWidth = tooltipNode.offsetWidth;
-    const tooltipHeight = tooltipNode.offsetHeight;
-    const pageX = event.pageX;
-    const pageY = event.pageY;
-    const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
-    const scrollY = window.scrollY;
-    let xPosition = pageX + 15;
-    let yPosition = pageY - 10;
-    if (xPosition + tooltipWidth > viewportWidth) {
-      xPosition = pageX - tooltipWidth - 15;
-    }
-    if (yPosition < scrollY) {
-      yPosition = scrollY + 5;
-    } else if (yPosition + tooltipHeight > scrollY + viewportHeight) {
-      yPosition = scrollY + viewportHeight - tooltipHeight - 5;
-    }
-    tooltip.style("left", xPosition + "px").style("top", yPosition + "px");
+  // --- Men's Tooltip Event Handler ---
+  const menMouseover = function (event, d) {
+    tooltip
+      .html(
+        `<strong>${
+          dataType === "occupation" ? "Occupation" : "Education"
+        }:</strong> ${d[categoryKey]}<br/>` +
+          `<strong>Men's Wage:</strong> $${d.menWage.toLocaleString()}`
+      )
+      .classed("visible", true);
   };
 
-  const mouseout = function (event, d) {
-    // Generic mouseout
+  // --- Women's Tooltip Event Handler ---
+  const womenMouseover = function (event, d) {
+    tooltip
+      .html(
+        `<strong>${
+          dataType === "occupation" ? "Occupation" : "Education"
+        }:</strong> ${d[categoryKey]}<br/>` +
+          `<strong>Women's Wage:</strong> $${d.womenWage.toLocaleString()}<br/>`
+      )
+
+      .classed("visible", true);
+  };
+
+  // --- Shared Tooltip Event Handlers ---
+  const tooltipMove = function (event, d) {
+    tooltip
+      .style("left", event.pageX + 15 + "px")
+      .style("top", event.pageY - 10 + "px");
+  };
+
+  const tooltipOut = function (event, d) {
     tooltip.classed("visible", false);
-  };
-
-  // Specific mouseover for Men
-  const mouseoverMen = function (event, d) {
-    tooltip
-      .html(
-        `<strong>${
-          dataType === "occupation" ? "Occupation" : "Education"
-        }:</strong> ${d[categoryKey]}<br/>` +
-          `<strong>Men's Income:</strong> $${d.menWage.toLocaleString()}`
-      )
-      .classed("visible", true);
-  };
-
-  // Specific mouseover for Women
-  const mouseoverWomen = function (event, d) {
-    tooltip
-      .html(
-        `<strong>${
-          dataType === "occupation" ? "Occupation" : "Education"
-        }:</strong> ${d[categoryKey]}<br/>` +
-          `<strong>Women's Income:</strong> $${d.womenWage.toLocaleString()}`
-      )
-      .classed("visible", true);
   };
   // --- End Tooltip Handlers ---
 
-  // Men's bars with updated colors
+  // Men's bars
   g.selectAll(".men-bar")
     .data(data)
-    .join("rect")
-    .attr("class", "bar men-bar")
+    .join("rect") // Use .join()
+    .attr("class", "bar men-bar") // Add "bar" class
     .attr("y", (d) => y(d[categoryKey]))
     .attr("x", 0)
-    .attr("height", y.bandwidth() / 2 - 2)
-    .attr("width", 0)
-    .attr("fill", CHART_COLORS.PRIMARY_1) // Updated color
+    .attr("height", y.bandwidth() * 0.45)
+    .attr("width", 0) // Start for animation
+    .attr("fill", CHART_COLORS.PRIMARY_1) // Dusty indigo color
     .style("cursor", "pointer")
-    .on("mouseover", mouseoverMen)
-    .on("mousemove", mousemove)
-    .on("mouseout", mouseout)
+    .on("mouseover", menMouseover)
+    .on("mousemove", tooltipMove)
+    .on("mouseout", tooltipOut)
     .transition()
     .duration(800)
     .attr("width", (d) => x(d.menWage));
 
-  // Women's bars with updated colors
+  // Women's bars
   g.selectAll(".women-bar")
     .data(data)
-    .join("rect")
-    .attr("class", "bar women-bar")
-    .attr("y", (d) => y(d[categoryKey]) + y.bandwidth() / 2 + 2)
+    .join("rect") // Use .join()
+    .attr("class", "bar women-bar") // Add "bar" class
+    .attr("y", (d) => y(d[categoryKey]) + y.bandwidth() * 0.55)
     .attr("x", 0)
-    .attr("height", y.bandwidth() / 2 - 2)
-    .attr("width", 0)
-    .attr("fill", CHART_COLORS.PRIMARY_2) // Updated color
+    .attr("height", y.bandwidth() * 0.45)
+    .attr("width", 0) // Start for animation
+    .attr("fill", CHART_COLORS.PRIMARY_2) // Orange color
     .style("cursor", "pointer")
-    .on("mouseover", mouseoverWomen)
-    .on("mousemove", mousemove)
-    .on("mouseout", mouseout)
+    .on("mouseover", womenMouseover)
+    .on("mousemove", tooltipMove)
+    .on("mouseout", tooltipOut)
     .transition()
     .duration(800)
     .attr("width", (d) => x(d.womenWage));
 
-  // Updated legend with new colors and better labels
+  // Legend
   const legend = svg
     .append("g")
     .attr(
@@ -232,27 +221,23 @@ function drawHorizontalBars(
         innerHeight + margin.bottom + 10
       })`
     );
-
-  // Men's legend item
   legend
     .append("circle")
     .attr("cx", 0)
     .attr("cy", 10)
     .attr("r", 6)
-    .attr("fill", CHART_COLORS.PRIMARY_1);
+    .attr("fill", "#5A67D8");
   legend.append("text").attr("x", 15).attr("y", 15).text("Men's Wage");
-
-  // Women's legend item
   legend
     .append("circle")
     .attr("cx", 120)
     .attr("cy", 10)
     .attr("r", 6)
-    .attr("fill", CHART_COLORS.PRIMARY_2);
+    .attr("fill", "#F6AD55");
   legend.append("text").attr("x", 135).attr("y", 15).text("Women's Wage");
 }
 
-// Text wrapping function (ensure it's present)
+// Text wrapping function
 function wrap(text, width) {
   text.each(function () {
     const text = d3.select(this);
@@ -268,7 +253,8 @@ function wrap(text, width) {
       .append("tspan")
       .attr("x", -10)
       .attr("y", y)
-      .attr("dy", dy + "em");
+      .attr("dy", dy + "em"); // Use existing x/y/dy
+
     while ((word = words.pop())) {
       line.push(word);
       tspan.text(line.join(" "));
@@ -281,7 +267,7 @@ function wrap(text, width) {
           .attr("x", -10)
           .attr("y", y)
           .attr("dy", ++lineNumber * lineHeight + dy + "em")
-          .text(word);
+          .text(word); // Increment dy for new line
       }
     }
   });
