@@ -179,7 +179,7 @@ function drawRaceVerticalBarChart(raceData) {
     .attr("x", innerWidth / 2)
     .attr("y", -20)
     .attr("text-anchor", "middle")
-    .text("Wage Comparison by Race/Ethnicity");
+    .text("Gender Wage Gap by Race/Ethnicity");
 
   const x = d3
     .scaleBand()

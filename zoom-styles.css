@@ -10,6 +10,7 @@
   z-index: 5;
   max-width: 250px;
   font-size: 14px;
+  transition: all 0.3s ease;
 }
 
 /* New zoom controls header */
@@ -18,6 +19,7 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 10px;
+  gap: 15px;
 }
 
 .zoom-title {
@@ -38,11 +40,19 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background-color 0.2s;
+  transition: background-color 0.2s, transform 0.2s;
+  margin-left: auto;
+  flex-shrink: 0;
 }
 
 .minimize-btn:hover {
   background-color: #F3F4F6;
+  transform: scale(1.05);
+}
+
+.minimize-btn:focus, .minimize-btn:active {
+  outline: none;
+  transform: scale(1.1);
 }
 
 /* Content container */
@@ -50,7 +60,21 @@
   transition: height 0.3s ease;
 }
 
-/* Original styling */
+.zoom-controls.minimized {
+  padding-bottom: 8px;
+  height: 40px;
+  overflow: hidden;
+}
+
+.zoom-controls-content {
+  height: 0;
+}
+
+.zoom-controls:not(.minimized) .zoom-controls-content {
+  height: auto;
+  padding-top: 10px;
+}
+
 .zoom-controls h3 {
   margin-top: 0;
   margin-bottom: 10px;
@@ -81,10 +105,15 @@
   margin-bottom: 10px;
   display: block;
   width: 100%;
+  padding: 10px 0;
+  border-radius: 6px;
+  text-align: center;
+  font-size: 16px;
 }
 
 #reset-zoom:hover {
   background-color: #D97706;
+  transform: scale(1.05);
 }
 
 .slider-container {
@@ -137,4 +166,36 @@
 /* When minimized, make the zoom controls take up less space */
 .zoom-controls.minimized {
   padding-bottom: 8px;
+  height: 40px;
+  overflow: hidden;
+}
+
+/* Responsive Layout for Smaller Screens */
+@media screen and (max-width: 600px) {
+  .zoom-controls {
+    max-width: 100%;
+    position: fixed;
+    bottom: 10px;
+    left: 10px;
+    width: 100%;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  }
+
+  .zoom-controls-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .zoom-title {
+    font-size: 14px;
+  }
+
+  .minimize-btn {
+    margin-left: 0;
+    margin-top: 8px;
+  }
+}
+
+.zoom-controls * {
+  box-sizing: border-box;
 }

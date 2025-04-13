@@ -1,6 +1,6 @@
 function drawOccupationStackedBarChart(occupationProportionData) {
   clearChartArea();
-  currentChartType = "bar";
+  currentChartType = "stackedbar";
   const tooltip = d3.select("#tooltip");
 
   const bottomMargin = 100;

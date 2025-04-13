@@ -22,7 +22,7 @@ function drawOccupationHorizontalBarChart(occupationData) {
     .attr("x", adjustedInnerWidth / 2)
     .attr("y", -20)
     .attr("text-anchor", "middle")
-    .text("Annual Wage by Occupation and Gender");
+    .text("Gender Wage Gap by Occupation");
 
   // Draw horizontal bar chart
   drawHorizontalBars(
@@ -80,7 +80,7 @@ function drawEducationHorizontalBarChart(educationData) {
     .attr("x", adjustedInnerWidth / 2)
     .attr("y", -20)
     .attr("text-anchor", "middle")
-    .text("Annual Wage by Education Level and Gender");
+    .text("Gender Wage Gap by Education Level");
 
   // Draw horizontal bar chart
   drawHorizontalBars(
