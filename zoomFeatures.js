@@ -54,6 +54,97 @@ function toggleZoomControlsVisibility() {
   d3.select(".minimize-btn").html(zoomControlsMinimized ? "+" : "−");
 }
 
+
+// // Apply zoom on time period
+// function applyTimeZoom(sliderValues) {
+//   console.log("Applying time zoom with values:", sliderValues);
+//   const startYear = sliderValues[0]; // Already Date objects
+//   const endYear = sliderValues[1];
+
+//   // Save original state if first zoom
+//   if (!originalZoomState.currentZoom) {
+//     originalZoomState.yearlyData = [...yearlyData];
+//     originalZoomState.xDomain = xScale.domain();
+//     originalZoomState.yDomain = yScale.domain();
+//     originalZoomState.currentZoom = true;
+//   }
+
+//   // Filter data by selected years - working with Date objects directly
+//   const filteredData = yearlyData.filter(
+//     (d) => d.year >= startYear && d.year <= endYear
+//   );
+
+//   console.log("Filtered data:", filteredData);
+
+//   // Update the chart with filtered data
+//   setTimeout(() => {
+//     clearChartArea();
+//     drawLineChart(filteredData);
+//   }, 500); // Reduced delay to minimize lag while allowing slider drag
+// }
+
+// // Updated addTimeRangeControls function that calls applyTimeZoom
+// function addTimeRangeControls(container) {
+//   const timeControls = container
+//     .append("div")
+//     .attr("class", "time-controls")
+//     .style("padding", "10px");
+
+//   // Add title
+//   timeControls.append("h3").text("Select Time Period");
+
+//   const formatYear = d3.timeFormat("%Y");
+
+//   // Get min and max years from data - already Date objects
+//   const minYear = d3.min(yearlyData, (d) => d.year);
+//   const maxYear = d3.max(yearlyData, (d) => d.year);
+
+//   console.log(
+//     "Min year: " + formatYear(minYear) + " Max year: " + formatYear(maxYear)
+//   );
+
+//   // Create SVG for D3 slider
+//   const sliderSvg = timeControls
+//     .append("svg")
+//     .attr("width", 320)
+//     .attr("height", 60)
+//     .style("overflow", "visible")
+//     .append("g")
+//     .attr("transform", "translate(10,20)");
+
+//   // Define D3 slider
+//   const sliderRange = d3
+//     .sliderBottom()
+//     .min(minYear)
+//     .max(maxYear)
+//     .width(200)
+//     .default([minYear, maxYear])
+//     .tickFormat(formatYear)
+//     .ticks(3)
+//     .fill("#4F46E5")
+//     .handle(d3.symbol().type(d3.symbolCircle).size(120));
+
+//   // Append slider to SVG
+//   sliderSvg.call(sliderRange);
+
+//   // Add year displays
+//   timeControls
+//     .append("div")
+//     .attr("class", "slider-container")
+//     .style("display", "flex")
+//     .style("justify-content", "space-between")
+//     .style("margin-top", "5px")
+//     .style("font-size", "13px")
+//     .style("color", "#6B7280");
+
+//   // On slider change, update year display and call applyTimeZoom
+//   sliderRange.on("onchange", (val) => {
+//     console.log("Slider changed:", val);
+//     sliderRange.value(val); // Explicitly update slider value to prevent reverting
+//     applyTimeZoom(val);
+//   });
+// }
+
 // Get ordered categories for different chart types
 function getOrderedCategories(dataSource) {
   // Define proper education order (from lowest to highest)

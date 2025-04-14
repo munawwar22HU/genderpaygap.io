@@ -1,6 +1,9 @@
 function drawLineChart(yearlyData) {
+  console.log("Drawing line chart with data:", yearlyData);
   clearChartArea();
   currentChartType = "line";
+
+  const formatYear = d3.timeFormat("%Y");
 
   const tooltip = d3.select("#tooltip");
   if (tooltip.empty()) {
@@ -12,14 +15,15 @@ function drawLineChart(yearlyData) {
     .append("g")
     .attr("transform", `translate(${margin.left}, ${margin.top})`);
 
+  // Set up xScale
   xScale = d3
-    .scaleLinear()
+    .scaleTime()
     .domain(d3.extent(yearlyData, (d) => d.year))
     .range([0, innerWidth]);
 
   g.append("g")
     .attr("transform", `translate(0, ${innerHeight})`)
-    .call(d3.axisBottom(xScale).tickFormat(d3.format("d")));
+    .call(d3.axisBottom(xScale).tickFormat(formatYear));
 
   yScale = d3
     .scaleLinear()
@@ -60,7 +64,7 @@ function drawLineChart(yearlyData) {
     .attr("x", innerWidth / 2)
     .attr("y", -20)
     .attr("text-anchor", "middle")
-    .text("Gender Wage Gap Trends (1981-2013)");
+    .text("Gender Wage Gap Trends (1981–2013)");
 
   const menLine = d3
     .line()
@@ -150,15 +154,13 @@ function drawLineChart(yearlyData) {
     tooltip.style("left", xPosition + "px").style("top", yPosition + "px");
   };
 
-  const mouseout = function (event, d) {
-    tooltip.classed("visible", false);
-  };
+  const mouseout = () => tooltip.classed("visible", false);
 
   const mouseoverMen = function (event, d) {
     tooltip
       .html(
-        `<strong>Year:</strong> ${d.year}<br/>` +
-          `<strong>Men's Wage:</strong> $${d.menWage.toLocaleString()}`
+        `<strong>Year:</strong> ${formatYear(d.year)}<br/>` +
+        `<strong>Men's Wage:</strong> $${d.menWage.toLocaleString()}`
       )
       .classed("visible", true);
   };
@@ -166,8 +168,8 @@ function drawLineChart(yearlyData) {
   const mouseoverWomen = function (event, d) {
     tooltip
       .html(
-        `<strong>Year:</strong> ${d.year}<br/>` +
-          `<strong>Women's Wage:</strong> $${d.womenWage.toLocaleString()}`
+        `<strong>Year:</strong> ${formatYear(d.year)}<br/>` +
+        `<strong>Women's Wage:</strong> $${d.womenWage.toLocaleString()}`
       )
       .classed("visible", true);
   };
@@ -175,8 +177,8 @@ function drawLineChart(yearlyData) {
   const mouseoverGap = function (event, d) {
     tooltip
       .html(
-        `<strong>Year:</strong> ${d.year}<br/>` +
-          `<strong>Percentage Gap:</strong> ${d.gapPercentage.toLocaleString()}%`
+        `<strong>Year:</strong> ${formatYear(d.year)}<br/>` +
+        `<strong>Percentage Gap:</strong> ${d.gapPercentage.toLocaleString()}%`
       )
       .classed("visible", true);
   };

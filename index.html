@@ -6,16 +6,17 @@
     <link rel="stylesheet" type="text/css" href="zoom-styles.css" />
     <link rel="stylesheet" type="text/css" href="popup-styles.css" />
     <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://unpkg.com/d3-simple-slider"></script>
   </head>
   <body>
     <!-- Info Button -->
     <button class="info-button" id="info-button">i</button>
 
     <!-- Overlay Background -->
-    <div class="overlay" id="overlay"></div>
+    <div class="overlay visible" id="overlay"></div>
 
     <!-- Instructions Popup -->
-    <div class="instructions-popup" id="instructions-popup">
+    <div class="instructions-popup visible" id="instructions-popup">
       <div class="popup-header">
         <h1 class="popup-title">Gender Wage Gap Visualization</h1>
         <button class="close-popup" id="close-popup">&times;</button>

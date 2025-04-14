@@ -199,3 +199,34 @@
 .zoom-controls * {
   box-sizing: border-box;
 }
+
+
+.time-controls .tick text {
+  font-size: 12px;
+  fill: #6B7280;
+}
+
+.time-controls .track {
+  stroke: #E5E7EB;
+  stroke-width: 6;
+  stroke-linecap: round;
+}
+
+.time-controls .track-inset {
+  stroke: #D1D5DB;
+  stroke-width: 6;
+  stroke-linecap: round;
+}
+
+.time-controls .track-fill {
+  stroke: #4F46E5;
+  stroke-width: 6;
+  stroke-linecap: round;
+}
+
+.time-controls .handle {
+  fill: white;
+  stroke: #4F46E5;
+  stroke-width: 2;
+  cursor: pointer;
+}

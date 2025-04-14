@@ -2,11 +2,12 @@
 async function loadData() {
   let genderPayGapData = []; // Store the raw data
   
+  const parseYear = d3.timeParse("%Y");
   // Load and format gender pay gap dataset
   await d3.csv("gender-pay-gap-dataset-final.csv").then((data) => {
     // Format the data
     genderPayGapData = data.map((d) => ({
-      year: +d.year,
+      year: parseYear(d.year.toString()),
       age: +d.age,
       sex: d.sex,
       race: d.race,
