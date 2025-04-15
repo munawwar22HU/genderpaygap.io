@@ -182,7 +182,26 @@ function addFilterControls(container) {
     });
 
   selectAllDiv.append("label").attr("for", "select-all").text("Select All");
+  checkboxContainer.on("wheel", function(event) {
+    const containerElement = this; // The checkbox-container div
 
+    // Check if the container is actually scrollable
+    // (scrollHeight > clientHeight means content is taller than the visible area)
+    if (containerElement.scrollHeight > containerElement.clientHeight) {
+
+        // Prevent the main page scroll listener from firing
+        event.stopPropagation();
+
+        // Adjust the container's scroll position
+        // deltaY is positive for scrolling down, negative for up
+        containerElement.scrollTop += event.deltaY;
+
+        // Optional: preventDefault() might be needed in some browsers
+        // if stopPropagation() alone isn't enough, but try without it first.
+        // event.preventDefault();
+    }
+    // If not scrollable, let the event bubble up naturally
+});
   categories.forEach((category) => {
     const div = checkboxContainer.append("div").attr("class", "checkbox-item");
 
