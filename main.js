@@ -113,6 +113,10 @@ async function initialise() {
   // Add scroll wheel navigation
   addScrollWheelNavigation();
 
+  infoBoxScroll();
+
+
+
   // Initialize SVG
   initializeSVG();
   
